@@ -39,6 +39,15 @@ Self-likes blocked. Like/unlike loop now only grants XP on first like (not on un
 - Only applied on registration (not login — too strict for existing users).
 - Fails open (allows through) if ip-api.com is down/rate-limited — never blocks legit users due to API failure.
 
+## Mandatory email 2FA for sensitive account actions
+- New registrations require a short-lived, one-time email code before activation; email delivery failures fail closed rather than auto-verifying.
+- Password changes validate the current password first, then require a separate email code before committing the bcrypt hash.
+- Codes are bcrypt-hashed; registration/login codes use the user record, while password-change codes and the pending password hash stay session-bound to prevent concurrent-flow collisions.
+
+**Why:** Registration and password changes are account-takeover surfaces; silently bypassing a required email challenge or sharing challenge state across flows would weaken the security guarantee.
+
+**How to apply:** Keep challenge identity and pending operations server-derived, clear one-time state after success, expire challenges quickly, and never put raw codes or plaintext passwords in storage.
+
 ## Known hacker on record (Vercel DB)
 - Vercel user id: 264, username: `a user`
 - Email: `soyito5427@cadebek.com` (disposable — cadebek.com)

@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
-import { CheckCircle2, XCircle, Loader2, Mail } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Mail, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Layout } from "@/components/layout";
 
-type State = "loading" | "success" | "expired" | "invalid";
+type State = "loading" | "code" | "success" | "expired" | "invalid";
 
 export default function VerifyEmail() {
   const [, setLocation] = useLocation();
   const [state, setState] = useState<State>("loading");
   const [username, setUsername] = useState("");
+  const [code, setCode] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const [codeLoading, setCodeLoading] = useState(false);
   const [resendEmail, setResendEmail] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
   const [resendDone, setResendDone] = useState(false);
@@ -22,7 +26,10 @@ export default function VerifyEmail() {
     fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, { credentials: "include" })
       .then(async (res) => {
         const data = await res.json();
-        if (res.ok && data.verified) {
+        if (res.ok && data.requiresRegistrationTwoFactor) {
+          setUsername(data.username ?? "");
+          setState("code");
+        } else if (res.ok && data.verified) {
           setUsername(data.username ?? "");
           setState("success");
         } else if (data.error?.includes("expired")) {
@@ -33,6 +40,26 @@ export default function VerifyEmail() {
       })
       .catch(() => setState("invalid"));
   }, []);
+
+  async function handleCodeSubmit() {
+    setCodeError("");
+    setCodeLoading(true);
+    try {
+      const res = await fetch("/api/auth/verify-registration", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Invalid verification code.");
+      setState("success");
+    } catch (e: any) {
+      setCodeError(e.message || "Invalid verification code.");
+    } finally {
+      setCodeLoading(false);
+    }
+  }
 
   async function handleResend() {
     if (!resendEmail || resendDone) return;
@@ -80,6 +107,38 @@ export default function VerifyEmail() {
               </p>
               <Button className="w-full h-12 font-bold rounded-xl text-base" onClick={() => setLocation("/login")}>
                 Sign in
+              </Button>
+            </>
+          )}
+
+          {/* Registration code */}
+          {state === "code" && (
+            <>
+              <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-6">
+                <ShieldCheck className="h-10 w-10 text-primary" />
+              </div>
+              <h1 className="text-2xl font-black text-foreground mb-2">Enter your code</h1>
+              <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+                {username ? <>Email confirmed for <span className="text-foreground font-semibold">{username}</span>. </> : ""}
+                Enter the 6-digit code from your Steam Family email to activate your account.
+              </p>
+              {codeError && <p className="text-sm text-destructive mb-3">{codeError}</p>}
+              <Input
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onKeyDown={(e) => { if (e.key === "Enter" && code.length === 6) handleCodeSubmit(); }}
+                placeholder="000000"
+                inputMode="numeric"
+                maxLength={6}
+                className="h-14 text-center text-3xl font-mono tracking-widest mb-4"
+                autoFocus
+              />
+              <Button
+                className="w-full h-12 font-bold rounded-xl text-base"
+                onClick={handleCodeSubmit}
+                disabled={code.length !== 6 || codeLoading}
+              >
+                {codeLoading ? "Activating..." : "Activate account"}
               </Button>
             </>
           )}

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle2, Eye, EyeOff, Zap, X, Mail, RefreshCw } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, Zap, X, Mail, RefreshCw, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
 const formSchema = z.object({
@@ -25,6 +25,9 @@ export default function Register() {
   const [submitError, setSubmitError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [registrationCode, setRegistrationCode] = useState("");
+  const [registrationCodeError, setRegistrationCodeError] = useState("");
+  const [registrationCodeLoading, setRegistrationCodeLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendDone, setResendDone] = useState(false);
 
@@ -39,7 +42,7 @@ export default function Register() {
       const result = await registerUser.mutateAsync({
         data: { username: values.username, email: values.email, password: values.password },
       });
-      if ((result as any)?.requiresEmailVerification) {
+      if ((result as any)?.requiresRegistrationTwoFactor || (result as any)?.requiresEmailVerification) {
         setPendingEmail(values.email);
       } else {
         // SMTP not configured — auto-logged-in
@@ -50,16 +53,46 @@ export default function Register() {
     }
   }
 
-  async function handleResend() {
-    if (!pendingEmail || resendDone) return;
-    setResendLoading(true);
+  async function handleVerifyRegistration() {
+    setRegistrationCodeError("");
+    setRegistrationCodeLoading(true);
     try {
-      await fetch("/api/auth/resend-verification", {
+      const res = await fetch("/api/auth/verify-registration", {
         method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: registrationCode.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Invalid verification code.");
+      setLocation("/");
+    } catch (e: any) {
+      setRegistrationCodeError(e.message || "Invalid verification code.");
+    } finally {
+      setRegistrationCodeLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    if (!pendingEmail || resendLoading) return;
+    setResendLoading(true);
+    setResendDone(false);
+    setRegistrationCodeError("");
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: pendingEmail }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Unable to resend the code.");
+      }
       setResendDone(true);
+      setRegistrationCode("");
+    } catch (e: any) {
+      setRegistrationCodeError(e.message || "Unable to resend the code.");
     } finally {
       setResendLoading(false);
     }
@@ -93,29 +126,52 @@ export default function Register() {
             <span className="font-black text-xl text-foreground">Steam Family</span>
           </div>
 
-          {/* ── Check-your-inbox state ── */}
+          {/* ── Registration verification state ── */}
           {pendingEmail ? (
             <div className="flex flex-col items-center gap-6 py-6 text-center">
               <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                <Mail className="h-10 w-10 text-primary" />
+                <ShieldCheck className="h-10 w-10 text-primary" />
               </div>
               <div>
-                <p className="font-black text-2xl text-foreground">Check your inbox</p>
+                <p className="font-black text-2xl text-foreground">Verify your email</p>
                 <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-xs mx-auto">
-                  We sent a verification link to{" "}
+                  We sent a 6-digit code to{" "}
                   <span className="text-foreground font-semibold">{pendingEmail}</span>. Click it to activate your account.
                 </p>
               </div>
 
-              <div className="w-full bg-secondary/30 border border-border rounded-xl p-4 text-sm text-muted-foreground text-left leading-relaxed">
-                <p className="font-semibold text-foreground mb-1">Didn't get it?</p>
-                <p>Check your spam folder. The link expires in 24 hours.</p>
+              {registrationCodeError && (
+                <div className="w-full flex items-start gap-3 bg-red-500/8 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400 text-left">
+                  <Zap className="h-4 w-4 mt-0.5 shrink-0" />
+                  {registrationCodeError}
+                </div>
+              )}
+
+              <div className="w-full space-y-3 text-left">
+                <label className="text-sm font-semibold text-foreground">Verification code</label>
+                <Input
+                  value={registrationCode}
+                  onChange={(e) => setRegistrationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  onKeyDown={(e) => { if (e.key === "Enter" && registrationCode.length === 6) handleVerifyRegistration(); }}
+                  placeholder="000000"
+                  inputMode="numeric"
+                  maxLength={6}
+                  className="h-14 text-center text-3xl font-mono tracking-widest bg-secondary/40 border-border focus:border-primary/60 rounded-xl"
+                  autoFocus
+                />
+                <Button
+                  className="w-full h-12 font-bold rounded-xl"
+                  onClick={handleVerifyRegistration}
+                  disabled={registrationCode.length !== 6 || registrationCodeLoading}
+                >
+                  {registrationCodeLoading ? "Verifying…" : "Verify email & create account"}
+                </Button>
               </div>
 
               {resendDone ? (
                 <div className="flex items-center gap-2 text-sm text-primary">
                   <CheckCircle2 className="h-4 w-4" />
-                  Verification email resent!
+                  New verification code sent!
                 </div>
               ) : (
                 <Button
@@ -129,12 +185,12 @@ export default function Register() {
                   ) : (
                     <RefreshCw className="h-4 w-4 mr-2" />
                   )}
-                  Resend verification email
+                  Resend verification code
                 </Button>
               )}
 
               <p className="text-sm text-muted-foreground">
-                Already verified?{" "}
+                Already have an account?{" "}
                 <Link href="/login" className="text-primary font-semibold hover:underline">
                   Sign in
                 </Link>

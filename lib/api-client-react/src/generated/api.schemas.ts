@@ -28,6 +28,43 @@ export interface RegisterInput {
   password: string;
 }
 
+export interface RegistrationChallenge {
+  requiresRegistrationTwoFactor: true;
+  requiresEmailVerification: true;
+  email: string;
+}
+
+export interface CodeInput {
+  /** @pattern ^[0-9]{6}$ */
+  code: string;
+}
+
+export interface ResendVerificationInput {
+  email: string;
+}
+
+export interface EmailSentResult {
+  sent: boolean;
+}
+
+export interface EmailVerificationResult {
+  verified: boolean;
+  requiresRegistrationTwoFactor: boolean;
+  username: string;
+  message: string;
+}
+
+export interface ChangePasswordInput {
+  currentPassword: string;
+  /** @minLength 6 */
+  newPassword: string;
+}
+
+export interface PasswordChangeChallenge {
+  requiresPasswordChangeTwoFactor: true;
+  email: string;
+}
+
 export interface LoginInput {
   username: string;
   password: string;
@@ -173,6 +210,7 @@ export interface CommentInput {
      * @maxLength 500
      */
   content: string;
+  /** @nullable */
   parentId?: number | null;
 }
 
@@ -312,6 +350,10 @@ export interface DrawResult {
   /** @nullable */
   winnerUsername?: string | null;
 }
+
+export type VerifyEmailParams = {
+token: string;
+};
 
 export type ListAccountsParams = {
 game?: string;

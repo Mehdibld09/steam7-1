@@ -32,7 +32,7 @@ export const RegisterBody = zod.object({
   "password": zod.string().min(registerBodyPasswordMin)
 })
 
-export const RegisterResponse = zod.object({
+export const RegisterResponse = zod.union([zod.object({
   "id": zod.number(),
   "username": zod.string(),
   "email": zod.string(),
@@ -46,6 +46,64 @@ export const RegisterResponse = zod.object({
   "banReason": zod.string().nullish(),
   "banExpiresAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date()
+}),zod.object({
+  "requiresRegistrationTwoFactor": zod.boolean(),
+  "requiresEmailVerification": zod.boolean(),
+  "email": zod.string().email()
+})])
+
+
+/**
+ * @summary Activate a new account with its email verification code
+ */
+export const verifyRegistrationBodyCodeRegExp = new RegExp('^[0-9]{6}$');
+
+
+export const VerifyRegistrationBody = zod.object({
+  "code": zod.string().regex(verifyRegistrationBodyCodeRegExp)
+})
+
+export const VerifyRegistrationResponse = zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "email": zod.string(),
+  "avatarUrl": zod.string().nullish(),
+  "points": zod.number(),
+  "xp": zod.number(),
+  "level": zod.number(),
+  "badgeName": zod.string().nullish(),
+  "isAdmin": zod.boolean(),
+  "isBanned": zod.boolean(),
+  "banReason": zod.string().nullish(),
+  "banExpiresAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Confirm an email verification link
+ */
+export const VerifyEmailQueryParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const VerifyEmailResponse = zod.object({
+  "verified": zod.boolean(),
+  "requiresRegistrationTwoFactor": zod.boolean(),
+  "username": zod.string(),
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Send a new registration verification code
+ */
+export const ResendVerificationBody = zod.object({
+  "email": zod.string().email()
+})
+
+export const ResendVerificationResponse = zod.object({
+  "sent": zod.boolean()
 })
 
 
@@ -71,6 +129,66 @@ export const LoginResponse = zod.object({
   "banReason": zod.string().nullish(),
   "banExpiresAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Complete login with an email 2FA code
+ */
+export const verifyTwoFactorBodyCodeRegExp = new RegExp('^[0-9]{6}$');
+
+
+export const VerifyTwoFactorBody = zod.object({
+  "code": zod.string().regex(verifyTwoFactorBodyCodeRegExp)
+})
+
+export const VerifyTwoFactorResponse = zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "email": zod.string(),
+  "avatarUrl": zod.string().nullish(),
+  "points": zod.number(),
+  "xp": zod.number(),
+  "level": zod.number(),
+  "badgeName": zod.string().nullish(),
+  "isAdmin": zod.boolean(),
+  "isBanned": zod.boolean(),
+  "banReason": zod.string().nullish(),
+  "banExpiresAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Request a password-change confirmation code
+ */
+export const requestPasswordChangeBodyNewPasswordMin = 6;
+
+
+
+export const RequestPasswordChangeBody = zod.object({
+  "currentPassword": zod.string(),
+  "newPassword": zod.string().min(requestPasswordChangeBodyNewPasswordMin)
+})
+
+export const RequestPasswordChangeResponse = zod.object({
+  "requiresPasswordChangeTwoFactor": zod.boolean(),
+  "email": zod.string().email()
+})
+
+
+/**
+ * @summary Complete a password change with its email code
+ */
+export const confirmPasswordChangeBodyCodeRegExp = new RegExp('^[0-9]{6}$');
+
+
+export const ConfirmPasswordChangeBody = zod.object({
+  "code": zod.string().regex(confirmPasswordChangeBodyCodeRegExp)
+})
+
+export const ConfirmPasswordChangeResponse = zod.object({
+  "message": zod.string()
 })
 
 
@@ -314,7 +432,7 @@ export const createCommentBodyContentMax = 500;
 
 export const CreateCommentBody = zod.object({
   "content": zod.string().min(1).max(createCommentBodyContentMax),
-  "parentId": zod.number().optional().nullable()
+  "parentId": zod.number().nullish()
 })
 
 export const CreateCommentResponse = zod.object({

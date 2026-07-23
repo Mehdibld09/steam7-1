@@ -56,7 +56,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                oneOf:
+                  - $ref: "#/components/schemas/User"
+                  - $ref: "#/components/schemas/RegistrationChallenge"
         "400":
           description: Validation error
           content:
@@ -69,6 +71,81 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiError"
+
+  /auth/verify-registration:
+    post:
+      operationId: verifyRegistration
+      tags: [auth]
+      summary: Activate a new account with its email verification code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CodeInput"
+      responses:
+        "200":
+          description: Account activated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: No pending registration or invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: Incorrect or expired code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /auth/verify-email:
+    get:
+      operationId: verifyEmail
+      tags: [auth]
+      summary: Confirm an email verification link
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Email link confirmed; code verification may still be required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailVerificationResult"
+        "400":
+          description: Invalid or expired link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /auth/resend-verification:
+    post:
+      operationId: resendVerification
+      tags: [auth]
+      summary: Send a new registration verification code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResendVerificationInput"
+      responses:
+        "200":
+          description: Request accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailSentResult"
 
   /auth/login:
     post:
@@ -90,6 +167,99 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /auth/verify-2fa:
+    post:
+      operationId: verifyTwoFactor
+      tags: [auth]
+      summary: Complete login with an email 2FA code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CodeInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: No pending login or invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: Incorrect or expired code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /auth/change-password:
+    put:
+      operationId: requestPasswordChange
+      tags: [auth]
+      summary: Request a password-change confirmation code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordInput"
+      responses:
+        "200":
+          description: Confirmation code sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PasswordChangeChallenge"
+        "401":
+          description: Current password is incorrect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: Email delivery unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /auth/change-password/confirm:
+    post:
+      operationId: confirmPasswordChange
+      tags: [auth]
+      summary: Complete a password change with its email code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CodeInput"
+      responses:
+        "200":
+          description: Password updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+        "400":
+          description: No pending password change or invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "401":
+          description: Incorrect or expired code
           content:
             application/json:
               schema:
@@ -922,6 +1092,77 @@ components:
           type: string
           minLength: 6
 
+    RegistrationChallenge:
+      type: object
+      required: [requiresRegistrationTwoFactor, requiresEmailVerification, email]
+      properties:
+        requiresRegistrationTwoFactor:
+          type: boolean
+          const: true
+        requiresEmailVerification:
+          type: boolean
+          const: true
+        email:
+          type: string
+          format: email
+
+    CodeInput:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          pattern: "^[0-9]{6}$"
+
+    ResendVerificationInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    EmailSentResult:
+      type: object
+      required: [sent]
+      properties:
+        sent:
+          type: boolean
+
+    EmailVerificationResult:
+      type: object
+      required: [verified, requiresRegistrationTwoFactor, username, message]
+      properties:
+        verified:
+          type: boolean
+        requiresRegistrationTwoFactor:
+          type: boolean
+        username:
+          type: string
+        message:
+          type: string
+
+    ChangePasswordInput:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 6
+
+    PasswordChangeChallenge:
+      type: object
+      required: [requiresPasswordChangeTwoFactor, email]
+      properties:
+        requiresPasswordChangeTwoFactor:
+          type: boolean
+          const: true
+        email:
+          type: string
+          format: email
+
     LoginInput:
       type: object
       required: [username, password]
@@ -1148,6 +1389,8 @@ components:
           type: string
           minLength: 1
           maxLength: 500
+        parentId:
+          type: ["integer", "null"]
 
     GameCount:
       type: object

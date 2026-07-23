@@ -6,12 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface CommentInput {
-  /**
-     * @minLength 1
-     * @maxLength 500
-     */
-  content: string;
-  /** @nullable */
-  parentId?: number | null;
+export interface PasswordChangeChallenge {
+  requiresPasswordChangeTwoFactor: true;
+  email: string;
 }

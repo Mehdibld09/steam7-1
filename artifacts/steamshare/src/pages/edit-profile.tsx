@@ -142,6 +142,8 @@ export default function EditProfile() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordCode, setPasswordCode] = useState("");
+  const [passwordCodeSent, setPasswordCodeSent] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Delete account
@@ -267,10 +269,36 @@ export default function EditProfile() {
         const e = await res.json().catch(() => ({}));
         throw new Error(e.error || "Failed to change password");
       }
+      setPasswordCodeSent(true);
+      toast({ title: "Confirmation code sent", description: "Check your email to finish changing your password." });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handlePasswordCodeConfirm = async () => {
+    if (!/^\d{6}$/.test(passwordCode)) {
+      toast({ title: "Enter the 6-digit code", variant: "destructive" });
+      return;
+    }
+    setPasswordLoading(true);
+    try {
+      const res = await fetch("/api/auth/change-password/confirm", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: passwordCode }),
+      });
+      const e = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(e.error || "Failed to confirm password change");
       toast({ title: "Password changed successfully!" });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setPasswordCode("");
+      setPasswordCodeSent(false);
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {
@@ -599,13 +627,45 @@ export default function EditProfile() {
             </div>
           </div>
 
-          <Button
-            onClick={handlePasswordChange}
-            disabled={!currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword || passwordLoading}
-            className="w-full"
-          >
-            {passwordLoading ? "Updating..." : "Update Password"}
-          </Button>
+          {!passwordCodeSent ? (
+            <Button
+              onClick={handlePasswordChange}
+              disabled={!currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword || passwordLoading}
+              className="w-full"
+            >
+              {passwordLoading ? "Sending code..." : "Send confirmation code"}
+            </Button>
+          ) : (
+            <div className="space-y-3 border-t border-border pt-4">
+              <p className="text-sm text-muted-foreground">
+                Enter the 6-digit code sent to your email to finish changing your password.
+              </p>
+              <Input
+                value={passwordCode}
+                onChange={(e) => setPasswordCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onKeyDown={(e) => { if (e.key === "Enter") handlePasswordCodeConfirm(); }}
+                placeholder="000000"
+                inputMode="numeric"
+                maxLength={6}
+                className="h-12 text-center text-2xl font-mono tracking-widest"
+                autoFocus
+              />
+              <Button
+                onClick={handlePasswordCodeConfirm}
+                disabled={passwordCode.length !== 6 || passwordLoading}
+                className="w-full"
+              >
+                {passwordLoading ? "Confirming..." : "Confirm password change"}
+              </Button>
+              <button
+                type="button"
+                onClick={() => { setPasswordCodeSent(false); setPasswordCode(""); }}
+                className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Start over
+              </button>
+            </div>
+          )}
         </div>
 
         {/* ── Two-Factor Authentication ── */}
