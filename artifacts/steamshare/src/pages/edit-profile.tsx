@@ -462,7 +462,7 @@ export default function EditProfile() {
                 <Palette className="h-4 w-4" /> Name Color
               </label>
               <div className="flex flex-wrap gap-2">
-                {BASIC_COLORS.filter(c => isPro ? c.animated : !c.animated).map((c) => {
+                {BASIC_COLORS.filter(c => !c.animated || isPro).map((c) => {
                   const isAnimated = c.animated;
                   const isSelected = premiumStatus?.nameColor === c.hex;
                   const isProRequired = false;
