@@ -508,6 +508,7 @@ export default function AccountDetail() {
                 <div className="mt-4 space-y-2">
                   <CollapsibleSection title="Games List" items={account.games} />
                   {/* Last checked + status badge + admin/mod check button */}
+                  {user && ((user as any).isAdmin || (user as any).isModerator) && (
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-2">
                       <p className="text-[10px] sm:text-xs text-muted-foreground">
@@ -546,7 +547,7 @@ export default function AccountDetail() {
                         return null;
                       })()}
                     </div>
-                    {user && ((user as any).isAdmin || (user as any).isModerator) && (
+                    {((user as any).isAdmin || (user as any).isModerator) && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -559,6 +560,7 @@ export default function AccountDetail() {
                       </Button>
                     )}
                   </div>
+                  )}
                 </div>
 
                 {/* Like + Report */}
