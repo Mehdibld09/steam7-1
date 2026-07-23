@@ -462,10 +462,10 @@ export default function EditProfile() {
                 <Palette className="h-4 w-4" /> Name Color
               </label>
               <div className="flex flex-wrap gap-2">
-                {BASIC_COLORS.map((c) => {
+                {BASIC_COLORS.filter(c => isPro ? c.animated : !c.animated).map((c) => {
                   const isAnimated = c.animated;
                   const isSelected = premiumStatus?.nameColor === c.hex;
-                  const isProRequired = c.animated && !isPremium;
+                  const isProRequired = false;
                   const swatchClass = c.hex === "rainbow" ? "rainbow-swatch"
                     : c.hex === "fire" ? "fire-swatch"
                     : c.hex === "ocean" ? "ocean-swatch"
@@ -522,8 +522,11 @@ export default function EditProfile() {
                   )}
                 </p>
               )}
-              {!isPremium && (
-                <p className="text-[10px] text-muted-foreground/70">🎨 Animated colors require a <Link href="/premium" className="text-primary hover:underline">Premium subscription</Link>.</p>
+              {isPremium && !isPro && (
+                <p className="text-[10px] text-muted-foreground/70">🎨 Animated colors are exclusive to <Link href="/premium" className="text-primary hover:underline">VIP subscribers</Link>.</p>
+              )}
+              {isPro && (
+                <p className="text-[10px] text-muted-foreground/70">✨ VIP members get exclusive animated name colors.</p>
               )}
             </div>
 
