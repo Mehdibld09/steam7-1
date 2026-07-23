@@ -1,8 +1,8 @@
 {
   "framework": null,
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/steamshare run build && mkdir -p dist && cp -r artifacts/steamshare/dist/public/. dist/",
-  "outputDirectory": "dist",
+  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/steamshare run build",
+  "outputDirectory": "artifacts/steamshare/dist/public",
   "functions": {
     "api/index.mjs": {
       "maxDuration": 30
