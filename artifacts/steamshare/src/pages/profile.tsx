@@ -289,7 +289,7 @@ export default function Profile() {
                     </Button>
                   )}
 
-                  {me.isAdmin && (
+                  {(me.isAdmin || (me as any).isModerator) && (
                     <a href={`https://admin.steamfamily.xyz?tab=users&id=${id}`} target="_blank" rel="noopener noreferrer">
                       <Button size="sm" variant="outline" className="gap-1.5">
                         <Coins className="h-3.5 w-3.5" /> Manage Points

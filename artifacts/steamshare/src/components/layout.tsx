@@ -580,7 +580,7 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
                         </span>
                         <ChevronRight className="h-4 w-4 opacity-40" />
                       </button>
-                    </Link>
+                    </a>
                   )}
                 </>
               ) : (
