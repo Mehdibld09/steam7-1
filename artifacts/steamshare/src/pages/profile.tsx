@@ -290,11 +290,11 @@ export default function Profile() {
                   )}
 
                   {me.isAdmin && (
-                    <Link href={`/admin?tab=users&id=${id}`}>
+                    <a href={`https://admin.steamfamily.xyz?tab=users&id=${id}`} target="_blank" rel="noopener noreferrer">
                       <Button size="sm" variant="outline" className="gap-1.5">
                         <Coins className="h-3.5 w-3.5" /> Manage Points
                       </Button>
-                    </Link>
+                    </a>
                   )}
                 </>
               )}

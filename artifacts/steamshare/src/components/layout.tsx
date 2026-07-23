@@ -284,12 +284,12 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
             {user ? (
               <>
                 {(user.isAdmin || (user as any).isModerator) && (
-                  <Link href="/admin">
+                  <a href="https://admin.steamfamily.xyz" target="_blank" rel="noopener noreferrer">
                     <button className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-primary/40 text-primary text-sm font-medium hover:bg-primary/10 transition-colors">
                       <Shield className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">{user.isAdmin ? "Admin" : "Mod"}</span>
                     </button>
-                  </Link>
+                  </a>
                 )}
 
                 {/* Post Account */}
@@ -569,7 +569,7 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
                     </button>
                   </Link>
                   {(user.isAdmin || (user as any).isModerator) && (
-                    <Link href="/admin">
+                    <a href="https://admin.steamfamily.xyz" target="_blank" rel="noopener noreferrer" className="block">
                       <button
                         onClick={() => setMenuOpen(false)}
                         className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium text-primary hover:bg-primary/10 border-l-2 border-transparent transition-colors"
