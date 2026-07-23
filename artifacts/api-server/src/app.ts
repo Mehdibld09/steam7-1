@@ -127,4 +127,19 @@ if (serveStatic) {
   });
 }
 
+// Keep API failures JSON so the web client can finish its query state and
+// display a useful retry action instead of waiting through a browser HTML error.
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
+
+  logger.error(
+    { err, method: req.method, url: req.originalUrl?.split("?")[0] },
+    "Unhandled API error",
+  );
+  res.status(500).json({ error: "Internal server error" });
+});
+
 export default app;

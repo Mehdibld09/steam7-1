@@ -39,7 +39,20 @@ async function pinAccount(accountId: number, pinned: boolean) {
 }
 
 export default function Home() {
-  const { data: accountsData, isLoading: accountsLoading } = useListAccounts({ sort: "recent", limit: 12 });
+  const {
+    data: accountsData,
+    isLoading: accountsLoading,
+    isError: accountsError,
+    refetch: refetchAccounts,
+  } = useListAccounts(
+    { sort: "recent", limit: 12 },
+    {
+      query: {
+        queryKey: getListAccountsQueryKey({ sort: "recent", limit: 12 }),
+        retry: false,
+      },
+    },
+  );
   const { data: announcements = [] } = useQuery({ queryKey: ["announcements"], queryFn: fetchAnnouncements });
   const { data: ticker } = useQuery({ queryKey: ["ticker"], queryFn: fetchTicker });
   const { data: me } = useGetMe();
@@ -189,6 +202,18 @@ export default function Home() {
               {[...Array(8)].map((_, i) => (
                 <Skeleton key={i} className="h-20 w-full rounded-xl" />
               ))}
+            </div>
+          ) : accountsError ? (
+            <div className="py-12 text-center border border-dashed border-destructive/40 rounded-xl">
+              <p className="text-muted-foreground">Accounts are temporarily unavailable.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={() => refetchAccounts()}
+              >
+                Try again
+              </Button>
             </div>
           ) : (
             <div className="flex flex-col gap-3">

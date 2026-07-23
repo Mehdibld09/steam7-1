@@ -15,7 +15,9 @@ A Steam account-sharing / exchange platform ("Steam Family") — members share u
 
 ### Vercel database setup
 
-The frontend calls the API through same-origin `/api/*` routes. Vercel therefore needs `DATABASE_URL` and `SESSION_SECRET` in the Vercel project environment, and the database referenced by `DATABASE_URL` must have this project's schema. A reachable but empty database causes the web page's data requests to return 500 errors such as `relation "accounts" does not exist`.
+The frontend calls the API through same-origin `/api/*` routes. Vercel therefore needs `DATABASE_URL` and `SESSION_SECRET` in the Vercel project environment, and the database referenced by `DATABASE_URL` must have this project's schema. A reachable but empty database returns `accounts: []`; a database URL that cannot be reached causes the web page's data requests to return 500 errors.
+
+For Supabase on Vercel, use Supabase's connection pooler URL (session or transaction pooler) rather than an IPv6-only direct database host. The API enables TLS automatically for Supabase hosts and uses one pooled connection per Vercel function.
 
 Before the first Vercel deployment, apply the schema using the Vercel database connection in a secure shell or CI environment:
 

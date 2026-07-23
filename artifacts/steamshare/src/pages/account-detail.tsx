@@ -147,7 +147,12 @@ export default function AccountDetail() {
   const [commentReportReason, setCommentReportReason] = useState("");
   const [commentReportDetails, setCommentReportDetails] = useState("");
 
-  const [checkResult, setCheckResult] = useState<{ status: string; checkStatus: "live" | "dead" | "2fa" | "error"; lastCheckedAt: string } | null>(null);
+  const [checkResult, setCheckResult] = useState<{
+    status: string;
+    checkStatus: "live" | "dead" | "2fa" | "error";
+    lastCheckedAt: string;
+    message?: string;
+  } | null>(null);
   const [replyToId, setReplyToId] = useState<number | null>(null);
   const [replyContent, setReplyContent] = useState("");
 
@@ -174,7 +179,12 @@ export default function AccountDetail() {
           : data.status === "valid" ? "live"
           : data.status === "invalid" ? "dead"
           : "error"; // keep "error" explicit so badge doesn't fall back to old DB status
-      setCheckResult({ status: data.status, checkStatus: cs as any, lastCheckedAt: data.lastCheckedAt });
+      setCheckResult({
+        status: data.status,
+        checkStatus: cs as any,
+        lastCheckedAt: data.lastCheckedAt,
+        message: data.message,
+      });
       queryClient.invalidateQueries({ queryKey: getGetAccountQueryKey(id) });
       const label = cs === "live" ? "Live ✓" : cs === "dead" ? "Dead ✗" : cs === "2fa" ? "2FA (valid creds)" : data.status === "rate_limited" ? "Rate limited — try again later" : data.status === "error" ? "Could not reach Steam" : data.status;
       toast({ title: "Health check complete", description: `Status: ${label}` });
