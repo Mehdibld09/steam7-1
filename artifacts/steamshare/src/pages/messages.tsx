@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, MessageSquare, ArrowLeft, Bot, MoreVertical, Trash2, Flag, Ban, X } from "lucide-react";
+import { UserBadge } from "@/components/user-badge";
 import { Link, useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -35,6 +36,10 @@ interface Conversation {
   partner_avatar_url: string | null;
   partner_is_admin: boolean;
   partner_is_moderator: boolean;
+  partner_name_color: string | null;
+  partner_badge_type: string | null;
+  partner_premium_tier: string | null;
+  partner_premium_expires_at: string | null;
   content: string;
   created_at: string;
   unread_count: number;
@@ -267,6 +272,8 @@ export default function Messages() {
   const [selectedAvatarUrl, setSelectedAvatarUrl] = useState<string | null>(null);
   const [selectedIsAdmin, setSelectedIsAdmin] = useState(false);
   const [selectedIsMod, setSelectedIsMod] = useState(false);
+  const [selectedNameColor, setSelectedNameColor] = useState<string | null>(null);
+  const [selectedBadgeType, setSelectedBadgeType] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const queryClient = useQueryClient();
@@ -317,6 +324,9 @@ export default function Messages() {
     setSelectedAvatarUrl(conv.partner_avatar_url ?? null);
     setSelectedIsAdmin(!!conv.partner_is_admin);
     setSelectedIsMod(!!conv.partner_is_moderator);
+    const premiumActive = conv.partner_premium_tier && conv.partner_premium_expires_at && new Date(conv.partner_premium_expires_at) > new Date();
+    setSelectedNameColor(premiumActive ? (conv.partner_name_color ?? null) : null);
+    setSelectedBadgeType(premiumActive ? (conv.partner_badge_type ?? null) : null);
     setMobileView("chat");
   };
 
@@ -375,7 +385,16 @@ export default function Messages() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="font-semibold text-sm truncate">{conv.partner_username}</span>
+                          {(() => {
+                            const premiumActive = conv.partner_premium_tier && conv.partner_premium_expires_at && new Date(conv.partner_premium_expires_at) > new Date();
+                            const nc = premiumActive ? conv.partner_name_color : null;
+                            const cls = nc === "rainbow" ? "rainbow-text" : nc === "fire" ? "fire-text" : nc === "ocean" ? "ocean-text" : nc === "galaxy" ? "galaxy-text" : nc === "neon" ? "neon-text" : nc === "gold" ? "gold-text" : null;
+                            return <span className={`font-semibold text-sm truncate${cls ? ` ${cls}` : ""}`} style={!cls && nc ? { color: nc } : undefined}>{conv.partner_username}</span>;
+                          })()}
+                          {(() => {
+                            const premiumActive = conv.partner_premium_tier && conv.partner_premium_expires_at && new Date(conv.partner_premium_expires_at) > new Date();
+                            return premiumActive ? <UserBadge badgeType={conv.partner_badge_type} size={13} /> : null;
+                          })()}
                           <RoleBadge isAdmin={conv.partner_is_admin} isModerator={conv.partner_is_moderator} />
                         </div>
                         {Number(conv.unread_count) > 0 && (
@@ -421,10 +440,21 @@ export default function Messages() {
                     {isBot ? (
                       <span className="font-semibold">{selectedUsername}</span>
                     ) : (
-                      <Link href={`/profile/${selectedUserId}`} className="font-semibold hover:text-primary truncate">
-                        {selectedUsername}
-                      </Link>
+                      (() => {
+                        const nc = selectedNameColor;
+                        const cls = nc === "rainbow" ? "rainbow-text" : nc === "fire" ? "fire-text" : nc === "ocean" ? "ocean-text" : nc === "galaxy" ? "galaxy-text" : nc === "neon" ? "neon-text" : nc === "gold" ? "gold-text" : null;
+                        return (
+                          <Link
+                            href={`/profile/${selectedUserId}`}
+                            className={`font-semibold hover:text-primary truncate${cls ? ` ${cls}` : ""}`}
+                            style={!cls && nc ? { color: nc } : undefined}
+                          >
+                            {selectedUsername}
+                          </Link>
+                        );
+                      })()
                     )}
+                    {!isBot && selectedBadgeType && <UserBadge badgeType={selectedBadgeType} size={15} />}
                     {isBot && (
                       <span className="bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">
                         System

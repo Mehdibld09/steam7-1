@@ -26,10 +26,14 @@ router.get("/conversations", requireAuth, async (req, res) => {
         m.created_at,
         m.is_read,
         m.sender_id,
-        u.username    AS partner_username,
-        u.avatar_url  AS partner_avatar_url,
-        u.is_admin    AS partner_is_admin,
-        u.is_moderator AS partner_is_moderator
+        u.username      AS partner_username,
+        u.avatar_url    AS partner_avatar_url,
+        u.is_admin      AS partner_is_admin,
+        u.is_moderator  AS partner_is_moderator,
+        u.name_color    AS partner_name_color,
+        u.badge_type    AS partner_badge_type,
+        u.premium_tier  AS partner_premium_tier,
+        u.premium_expires_at AS partner_premium_expires_at
       FROM (
         SELECT CASE WHEN sender_id = ${myId} THEN receiver_id ELSE sender_id END AS partner_id, id
         FROM messages

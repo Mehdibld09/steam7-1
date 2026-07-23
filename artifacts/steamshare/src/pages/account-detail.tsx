@@ -648,21 +648,28 @@ export default function AccountDetail() {
                             <div className="flex justify-between items-start">
                               <div>
                                 <span className="inline-flex items-center gap-1">
-                                  <Link
-                                    href={`/profile/${comment.userId}`}
-                                    className="font-semibold text-xs sm:text-sm hover:text-primary transition-colors"
-                                    style={(comment as any).nameColor ? { color: (comment as any).nameColor } : undefined}
-                                  >
-                                    {comment.username}
-                                  </Link>
-                                  {(comment as any).badgeType && (
-                                    <img
-                                      src={(comment as any).badgeType === "vip" ? "/badge-vip.png" : "/badge-gold.png"}
-                                      alt={(comment as any).badgeType === "vip" ? "Pro VIP" : "Premium"}
-                                      title={(comment as any).badgeType === "vip" ? "Pro VIP Member" : "Premium Member"}
-                                      style={{ width: 14, height: 14, display: "inline-block" }}
-                                    />
+                                  {(comment as any).nameColor === "rainbow" ? (
+                                    <Link href={`/profile/${comment.userId}`} className="rainbow-text font-semibold text-xs sm:text-sm">{comment.username}</Link>
+                                  ) : (comment as any).nameColor === "fire" ? (
+                                    <Link href={`/profile/${comment.userId}`} className="fire-text font-semibold text-xs sm:text-sm">{comment.username}</Link>
+                                  ) : (comment as any).nameColor === "ocean" ? (
+                                    <Link href={`/profile/${comment.userId}`} className="ocean-text font-semibold text-xs sm:text-sm">{comment.username}</Link>
+                                  ) : (comment as any).nameColor === "galaxy" ? (
+                                    <Link href={`/profile/${comment.userId}`} className="galaxy-text font-semibold text-xs sm:text-sm">{comment.username}</Link>
+                                  ) : (comment as any).nameColor === "neon" ? (
+                                    <Link href={`/profile/${comment.userId}`} className="neon-text font-semibold text-xs sm:text-sm">{comment.username}</Link>
+                                  ) : (comment as any).nameColor === "gold" ? (
+                                    <Link href={`/profile/${comment.userId}`} className="gold-text font-semibold text-xs sm:text-sm">{comment.username}</Link>
+                                  ) : (
+                                    <Link
+                                      href={`/profile/${comment.userId}`}
+                                      className="font-semibold text-xs sm:text-sm hover:text-primary transition-colors"
+                                      style={(comment as any).nameColor ? { color: (comment as any).nameColor } : undefined}
+                                    >
+                                      {comment.username}
+                                    </Link>
                                   )}
+                                  <UserBadge badgeType={(comment as any).badgeType} size={14} />
                                 </span>
                                 <span className="text-[10px] sm:text-xs text-muted-foreground ml-2">{formatDistanceToNow(new Date(comment.createdAt))} ago</span>
                               </div>
@@ -750,20 +757,28 @@ export default function AccountDetail() {
                                   <div className="flex justify-between items-start">
                                     <div>
                                       <span className="inline-flex items-center gap-1">
-                                        <Link
-                                          href={`/profile/${reply.userId}`}
-                                          className="font-semibold text-[11px] sm:text-xs hover:text-primary transition-colors"
-                                          style={(reply as any).nameColor ? { color: (reply as any).nameColor } : undefined}
-                                        >
-                                          {reply.username}
-                                        </Link>
-                                        {(reply as any).badgeType && (
-                                          <img
-                                            src={(reply as any).badgeType === "vip" ? "/badge-vip.png" : "/badge-gold.png"}
-                                            alt={(reply as any).badgeType === "vip" ? "Pro VIP" : "Premium"}
-                                            style={{ width: 12, height: 12, display: "inline-block" }}
-                                          />
+                                        {(reply as any).nameColor === "rainbow" ? (
+                                          <Link href={`/profile/${reply.userId}`} className="rainbow-text font-semibold text-[11px] sm:text-xs">{reply.username}</Link>
+                                        ) : (reply as any).nameColor === "fire" ? (
+                                          <Link href={`/profile/${reply.userId}`} className="fire-text font-semibold text-[11px] sm:text-xs">{reply.username}</Link>
+                                        ) : (reply as any).nameColor === "ocean" ? (
+                                          <Link href={`/profile/${reply.userId}`} className="ocean-text font-semibold text-[11px] sm:text-xs">{reply.username}</Link>
+                                        ) : (reply as any).nameColor === "galaxy" ? (
+                                          <Link href={`/profile/${reply.userId}`} className="galaxy-text font-semibold text-[11px] sm:text-xs">{reply.username}</Link>
+                                        ) : (reply as any).nameColor === "neon" ? (
+                                          <Link href={`/profile/${reply.userId}`} className="neon-text font-semibold text-[11px] sm:text-xs">{reply.username}</Link>
+                                        ) : (reply as any).nameColor === "gold" ? (
+                                          <Link href={`/profile/${reply.userId}`} className="gold-text font-semibold text-[11px] sm:text-xs">{reply.username}</Link>
+                                        ) : (
+                                          <Link
+                                            href={`/profile/${reply.userId}`}
+                                            className="font-semibold text-[11px] sm:text-xs hover:text-primary transition-colors"
+                                            style={(reply as any).nameColor ? { color: (reply as any).nameColor } : undefined}
+                                          >
+                                            {reply.username}
+                                          </Link>
                                         )}
+                                        <UserBadge badgeType={(reply as any).badgeType} size={12} />
                                       </span>
                                       <span className="text-[10px] text-muted-foreground ml-1.5">{formatDistanceToNow(new Date(reply.createdAt))} ago</span>
                                     </div>
