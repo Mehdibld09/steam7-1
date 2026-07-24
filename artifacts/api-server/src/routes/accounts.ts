@@ -183,6 +183,7 @@ router.post("/", requireAuth, async (req, res) => {
 
   const userId = req.session.userId!;
   const { title, description, games, pointsCost, steamUsername, steamPassword, unlockMethod } = parsed.data as typeof parsed.data & { unlockMethod?: string };
+  const isVipUnlock = unlockMethod === "vip";
   const safeUnlockMethod = ["login", "like", "comment"].includes(unlockMethod ?? "") ? (unlockMethod as "login" | "like" | "comment") : "login";
 
   const existingAccount = await db
@@ -211,7 +212,7 @@ router.post("/", requireAuth, async (req, res) => {
   const customButtonLabel = customButtonEnabled ? String((req.body as any).customButtonLabel ?? "").trim() || null : null;
   const customButtonUrl = customButtonEnabled ? String((req.body as any).customButtonUrl ?? "").trim() || null : null;
 
-  const vipOnly = !!(req.body as any).vipOnly;
+  const vipOnly = isVipUnlock || !!(req.body as any).vipOnly;
 
   const [account] = await db
     .insert(accountsTable)

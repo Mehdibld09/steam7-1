@@ -22,7 +22,7 @@ const formSchema = z.object({
   pointsCost: z.coerce.number().min(0),
   steamUsername: z.string().min(1, "Steam username is required"),
   steamPassword: z.string().min(1, "Steam password is required"),
-  unlockMethod: z.enum(["login", "like", "comment"]).default("login"),
+  unlockMethod: z.enum(["login", "like", "comment", "vip"]).default("login"),
   customButtonEnabled: z.boolean().default(false),
   customButtonLabel: z.string().max(60).optional(),
   customButtonUrl: z.string().max(500).optional(),
@@ -164,7 +164,7 @@ export default function Submit() {
           steamPassword: values.steamPassword,
           unlockMethod: values.unlockMethod,
           isFamilyShare,
-          vipOnly: (values as any).vipOnly ?? false,
+          vipOnly: values.unlockMethod === "vip",
           ...(user?.isAdmin && values.customButtonEnabled ? {
             customButtonEnabled: true,
             customButtonLabel: values.customButtonLabel || "",
@@ -330,27 +330,13 @@ export default function Submit() {
                         <option value="login">Login only — anyone logged in can claim</option>
                         <option value="like">Must Like — viewer must like the post first</option>
                         <option value="comment">Must Comment — viewer must comment first</option>
+                        <option value="vip">VIP Only — only users with an active VIP subscription can see and claim this account</option>
                       </select>
                     </FormControl>
                     <FormDescription>Choose what action a viewer must complete before they can see the credentials.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )} />
-
-                {/* VIP-only visibility */}
-                <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-4 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <Checkbox
-                      id="vipOnly"
-                      checked={form.watch("vipOnly" as any) ?? false}
-                      onCheckedChange={(v) => (form as any).setValue("vipOnly", !!v)}
-                    />
-                    <label htmlFor="vipOnly" className="cursor-pointer select-none">
-                      <span className="font-semibold text-yellow-400 text-sm">VIP Only</span>
-                      <p className="text-xs text-muted-foreground mt-0.5">Only users with an active VIP subscription can see and claim this account.</p>
-                    </label>
-                  </div>
-                </div>
 
                 {/* Steam Credentials + Verify */}
                 <div className="bg-muted/30 border border-border rounded-xl p-5 space-y-4">
