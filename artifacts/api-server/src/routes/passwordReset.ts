@@ -1,7 +1,7 @@
 // @ts-nocheck
 import express from "express";
 import { db, usersTable, passwordResetTokensTable } from "@workspace/db";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendEmail, passwordResetOtpEmailHtml } from "../lib/email";
@@ -15,10 +15,14 @@ router.post("/forgot-password", async (req, res) => {
     return;
   }
 
+  // Normalize to lowercase + trim so lookup matches regardless of how the
+  // email was stored at registration (case-insensitive comparison)
+  const normalizedEmail = email.toLowerCase().trim();
+
   const [user] = await db
     .select({ id: usersTable.id, username: usersTable.username, email: usersTable.email })
     .from(usersTable)
-    .where(eq(usersTable.email, email))
+    .where(sql`lower(${usersTable.email}) = ${normalizedEmail}`)
     .limit(1);
 
   if (!user) {
@@ -39,8 +43,9 @@ router.post("/forgot-password", async (req, res) => {
 
   try {
     await sendEmail(user.email, "Your Steam Family password reset code", passwordResetOtpEmailHtml(code, user.username));
-  } catch {
-    // Don't reveal email errors to the client
+  } catch (emailErr: any) {
+    // Log to server so SMTP issues are visible, but don't leak details to the client
+    console.error("[forgot-password] Failed to send reset email to", user.email, ":", emailErr?.message ?? emailErr);
   }
 
   res.json({ message: "If an account with that email exists, a reset code has been sent." });
