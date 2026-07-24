@@ -59,7 +59,7 @@ Do not add `db:push` to the Vercel build or server startup command. Schema chang
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Use the Replit-managed local PostgreSQL database for development for now; defer Supabase until requested.
 
 ## Gotchas
 
