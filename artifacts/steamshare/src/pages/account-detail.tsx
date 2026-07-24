@@ -517,7 +517,7 @@ export default function AccountDetail() {
                     return (
                       <div className="mt-3 p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20 text-xs sm:text-sm text-center space-y-1">
                         <p className="font-medium text-yellow-400">VIP membership required</p>
-                        <p className="text-xs text-muted-foreground">This listing is exclusive to active VIP subscribers.</p>
+                        <p className="text-xs text-muted-foreground">This listing is exclusive to active VIP subscribers. <Link href="/premium" className="text-yellow-400 underline underline-offset-2 hover:text-yellow-300 font-medium">Buy Now</Link></p>
                       </div>
                     );
                   }
