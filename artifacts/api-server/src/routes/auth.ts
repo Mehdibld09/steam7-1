@@ -11,8 +11,6 @@ import { isVpnOrProxy } from "../lib/ipCheck";
 import {
   sendEmail,
   twoFactorEmailHtml,
-  verificationEmailHtml,
-  registrationCodeEmailHtml,
   passwordChangeEmailHtml,
 } from "../lib/email";
 
@@ -74,45 +72,7 @@ router.post("/register", async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const [startingPoints, emailVerifSetting] = await Promise.all([
-    getSetting("points_registration"),
-    getSetting("register_email_verification_enabled"),
-  ]);
-
-  // Check if email verification is disabled in site settings
-  const emailVerificationEnabled = emailVerifSetting !== "0";
-
-  if (!emailVerificationEnabled) {
-    // Skip email verification — insert user as already verified and log them in immediately
-    const [user] = await db
-      .insert(usersTable)
-      .values({
-        username,
-        email,
-        passwordHash,
-        registrationIp: ip,
-        points: startingPoints,
-        emailVerified: true,
-      })
-      .returning();
-
-    req.session.regenerate((err: any) => {
-      if (err) { res.status(500).json({ error: "Session error" }); return; }
-      (req.session as any).userId = user.id;
-      req.session.save((saveErr: any) => {
-        if (saveErr) { res.status(500).json({ error: "Session error" }); return; }
-        res.status(201).json({ user: { id: user.id, username: user.username, email: user.email, role: user.role } });
-      });
-    });
-    return;
-  }
-
-  // Generate email verification token
-  const verificationToken = crypto.randomBytes(32).toString("hex");
-  const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-  const registrationCode = createVerificationCode();
-  const registrationCodeHash = await bcrypt.hash(registrationCode, 10);
-  const registrationCodeExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+  const startingPoints = await getSetting("points_registration");
 
   const [user] = await db
     .insert(usersTable)
@@ -122,196 +82,22 @@ router.post("/register", async (req, res) => {
       passwordHash,
       registrationIp: ip,
       points: startingPoints,
-      emailVerified: false,
-      emailVerificationToken: verificationToken,
-      emailVerificationExpiresAt: verificationExpiresAt,
-      twoFactorCode: registrationCodeHash,
-      twoFactorCodeExpiresAt: registrationCodeExpiresAt,
+      emailVerified: true,
     })
     .returning();
 
-  // Try to send verification email; if SMTP not configured, auto-verify and log in normally
-  const host = req.headers.host || "localhost";
-  const protocol = req.headers["x-forwarded-proto"] || "https";
-  const verifyUrl = `${protocol}://${host}/verify-email?token=${verificationToken}`;
-
-  try {
-    await sendEmail(
-      email,
-      "Your Steam Family verification code",
-      registrationCodeEmailHtml(registrationCode, username, verifyUrl),
-    );
-    // Email sent — require the one-time code before creating a session.
-    req.session.regenerate((err: any) => {
-      if (err) {
-        res.status(500).json({ error: "Session error" });
-        return;
-      }
-      (req.session as any).pendingRegistrationUserId = user.id;
-      req.session.save((saveErr: any) => {
-        if (saveErr) {
-          res.status(500).json({ error: "Session error" });
-          return;
-        }
-        res.status(201).json({
-          requiresRegistrationTwoFactor: true,
-          requiresEmailVerification: true,
-          email,
-        });
-      });
-    });
-  } catch (emailErr: any) {
-    const msg: string = emailErr?.message ?? "";
-    // Mandatory registration 2FA fails closed when email delivery is unavailable.
-    if (msg.includes("SMTP is not configured")) {
-      res.status(503).json({ error: "Email delivery is not configured. Registration cannot be completed right now." });
-      return;
-    }
-    res.status(503).json({ error: "We couldn't send the verification code. Registration cannot be completed right now." });
-  }
-});
-
-// POST /auth/verify-registration — activate a new account with its email code
-router.post("/verify-registration", async (req, res) => {
-  const pendingUserId = (req.session as any).pendingRegistrationUserId;
-  const { code } = req.body as { code?: string };
-
-  if (!pendingUserId) {
-    res.status(400).json({ error: "No pending registration. Please register again." });
-    return;
-  }
-  if (!code || typeof code !== "string" || !/^\d{6}$/.test(code.trim())) {
-    res.status(400).json({ error: "Enter the 6-digit verification code." });
-    return;
-  }
-
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, pendingUserId)).limit(1);
-  if (!user) {
-    res.status(400).json({ error: "Registration could not be found. Please register again." });
-    return;
-  }
-  const codeMatches = user.twoFactorCode
-    ? await bcrypt.compare(code.trim(), user.twoFactorCode).catch(() => false)
-    : false;
-  if (!codeMatches) {
-    res.status(401).json({ error: "Incorrect verification code." });
-    return;
-  }
-  if (!user.twoFactorCodeExpiresAt || new Date() > new Date(user.twoFactorCodeExpiresAt)) {
-    res.status(401).json({ error: "Verification code expired. Request a new code." });
-    return;
-  }
-
-  await db.update(usersTable)
-    .set({
-      emailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpiresAt: null,
-      twoFactorCode: null,
-      twoFactorCodeExpiresAt: null,
-    })
-    .where(eq(usersTable.id, user.id));
-
-  const { passwordHash: _, ...safeUser } = user;
   req.session.regenerate((err: any) => {
-    if (err) {
-      res.status(500).json({ error: "Session error" });
-      return;
-    }
+    if (err) { res.status(500).json({ error: "Session error" }); return; }
     req.session.userId = user.id;
     req.session.isAdmin = user.isAdmin;
     req.session.isModerator = user.isModerator;
     req.session._banCheckedAt = Date.now();
     req.session.save((saveErr: any) => {
-      if (saveErr) {
-        res.status(500).json({ error: "Session error" });
-        return;
-      }
-      res.status(200).json(safeUser);
+      if (saveErr) { res.status(500).json({ error: "Session error" }); return; }
+      const { passwordHash: _, ...safeUser } = user;
+      res.status(201).json(safeUser);
     });
   });
-});
-
-// GET /auth/verify-email?token=xxx — verify email address
-router.get("/verify-email", async (req, res) => {
-  const { token } = req.query as { token?: string };
-  if (!token || typeof token !== "string") {
-    res.status(400).json({ error: "Invalid or missing token." });
-    return;
-  }
-
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.emailVerificationToken, token)).limit(1);
-  if (!user) {
-    res.status(400).json({ error: "Verification link is invalid or has already been used." });
-    return;
-  }
-
-  if (user.emailVerificationExpiresAt && new Date() > new Date(user.emailVerificationExpiresAt)) {
-    res.status(400).json({ error: "Verification link has expired. Please request a new one." });
-    return;
-  }
-
-  // The link confirms ownership of the address, but the mandatory registration
-  // code still has to be entered before the account becomes active.
-  (req.session as any).pendingRegistrationUserId = user.id;
-  req.session.save((saveErr: any) => {
-    if (saveErr) {
-      res.status(500).json({ error: "Session error" });
-      return;
-    }
-    res.json({
-      verified: false,
-      requiresRegistrationTwoFactor: true,
-      username: user.username,
-      message: "Email confirmed. Enter the verification code sent to your inbox to activate your account.",
-    });
-  });
-});
-
-// POST /auth/resend-verification — resend verification email
-router.post("/resend-verification", async (req, res) => {
-  const { email } = req.body as { email?: string };
-  if (!email || typeof email !== "string") {
-    res.status(400).json({ error: "Email is required." });
-    return;
-  }
-
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
-  // Always respond OK to avoid leaking whether an email exists
-  if (!user || user.emailVerified) {
-    res.json({ sent: true });
-    return;
-  }
-
-  const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const code = createVerificationCode();
-  const codeHash = await bcrypt.hash(code, 10);
-  await db.update(usersTable)
-    .set({
-      emailVerificationToken: token,
-      emailVerificationExpiresAt: expiresAt,
-      twoFactorCode: codeHash,
-      twoFactorCodeExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      emailVerified: false,
-    })
-    .where(eq(usersTable.id, user.id));
-
-  const host = req.headers.host || "localhost";
-  const protocol = req.headers["x-forwarded-proto"] || "https";
-  const verifyUrl = `${protocol}://${host}/verify-email?token=${token}`;
-
-  try {
-    await sendEmail(
-      email,
-      "Your Steam Family verification code",
-      registrationCodeEmailHtml(code, user.username, verifyUrl),
-    );
-  } catch {
-    // silent — don't leak SMTP errors
-  }
-
-  res.json({ sent: true });
 });
 
 router.post("/login", async (req, res) => {
@@ -340,23 +126,6 @@ router.post("/login", async (req, res) => {
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
     res.status(401).json({ error: "Invalid credentials" });
-    return;
-  }
-
-  // Block login for unverified accounts
-  if (user.emailVerified === false) {
-    res.status(403).json({ error: "Please verify your email before logging in.", requiresEmailVerification: true, email: user.email });
-    return;
-  }
-
-  // A newly registered user must complete the registration code challenge
-  // before the first session can be created, even if they clicked the link.
-  if (!user.emailVerified && user.twoFactorCode) {
-    res.status(403).json({
-      error: "Please complete registration with the verification code sent to your email.",
-      requiresRegistrationTwoFactor: true,
-      email: user.email,
-    });
     return;
   }
 
