@@ -359,27 +359,17 @@ export default function AccountDetail() {
             </Link>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                {(account as any).posterNameColor === "rainbow" ? (
-                  <Link href={`/profile/${account.userId}`} className="rainbow-text font-bold text-sm sm:text-base truncate">{account.posterUsername}</Link>
-                ) : (account as any).posterNameColor === "fire" ? (
-                  <Link href={`/profile/${account.userId}`} className="fire-text font-bold text-sm sm:text-base truncate">{account.posterUsername}</Link>
-                ) : (account as any).posterNameColor === "ocean" ? (
-                  <Link href={`/profile/${account.userId}`} className="ocean-text font-bold text-sm sm:text-base truncate">{account.posterUsername}</Link>
-                ) : (account as any).posterNameColor === "galaxy" ? (
-                  <Link href={`/profile/${account.userId}`} className="galaxy-text font-bold text-sm sm:text-base truncate">{account.posterUsername}</Link>
-                ) : (account as any).posterNameColor === "neon" ? (
-                  <Link href={`/profile/${account.userId}`} className="neon-text font-bold text-sm sm:text-base truncate">{account.posterUsername}</Link>
-                ) : (account as any).posterNameColor === "gold" ? (
-                  <Link href={`/profile/${account.userId}`} className="gold-text font-bold text-sm sm:text-base truncate">{account.posterUsername}</Link>
-                ) : (
-                  <Link
-                    href={`/profile/${account.userId}`}
-                    className="font-bold text-sm sm:text-base hover:text-primary transition-colors truncate"
-                    style={(account as any).posterNameColor ? { color: (account as any).posterNameColor } : undefined}
-                  >
-                    {account.posterUsername}
-                  </Link>
-                )}
+                {(() => {
+                  const nc = (account as any).posterNameColor;
+                  const cls = nc === "rainbow" ? "rainbow-text" : nc === "fire" ? "fire-text" : nc === "ocean" ? "ocean-text" : nc === "galaxy" ? "galaxy-text" : nc === "neon" ? "neon-text" : nc === "gold" ? "gold-text" : null;
+                  return (
+                    <Link href={`/profile/${account.userId}`} className="font-bold text-sm sm:text-base hover:opacity-80 transition-opacity truncate">
+                      <span className={cls ?? undefined} style={!cls && nc ? { color: nc } : undefined}>
+                        {account.posterUsername}
+                      </span>
+                    </Link>
+                  );
+                })()}
                 <UserBadge badgeType={(account as any).posterBadgeType} size={14} />
                 {poster?.badgeName && (
                   <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] px-1.5 py-0 flex items-center gap-0.5 shrink-0">

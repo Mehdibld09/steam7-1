@@ -81,26 +81,17 @@ export function AccountCard({ account, isAdmin, onPin, onUnpin }: AccountCardPro
                     {(account.posterUsername?.substring(0, 2) ?? "U").toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                {(account as any).posterNameColor === "rainbow" ? (
-                  <span className="rainbow-text text-xs font-medium truncate max-w-[80px]">{account.posterUsername}</span>
-                ) : (account as any).posterNameColor === "fire" ? (
-                  <span className="fire-text text-xs font-medium truncate max-w-[80px]">{account.posterUsername}</span>
-                ) : (account as any).posterNameColor === "ocean" ? (
-                  <span className="ocean-text text-xs font-medium truncate max-w-[80px]">{account.posterUsername}</span>
-                ) : (account as any).posterNameColor === "galaxy" ? (
-                  <span className="galaxy-text text-xs font-medium truncate max-w-[80px]">{account.posterUsername}</span>
-                ) : (account as any).posterNameColor === "neon" ? (
-                  <span className="neon-text text-xs font-medium truncate max-w-[80px]">{account.posterUsername}</span>
-                ) : (account as any).posterNameColor === "gold" ? (
-                  <span className="gold-text text-xs font-medium truncate max-w-[80px]">{account.posterUsername}</span>
-                ) : (
-                  <span
-                    className="text-xs font-medium truncate max-w-[80px]"
-                    style={(account as any).posterNameColor ? { color: (account as any).posterNameColor } : undefined}
-                  >
-                    {account.posterUsername}
-                  </span>
-                )}
+                {(() => {
+                  const nc = (account as any).posterNameColor;
+                  const cls = nc === "rainbow" ? "rainbow-text" : nc === "fire" ? "fire-text" : nc === "ocean" ? "ocean-text" : nc === "galaxy" ? "galaxy-text" : nc === "neon" ? "neon-text" : nc === "gold" ? "gold-text" : null;
+                  return (
+                    <span className="text-xs font-medium truncate max-w-[80px]">
+                      <span className={cls ?? undefined} style={!cls && nc ? { color: nc } : undefined}>
+                        {account.posterUsername}
+                      </span>
+                    </span>
+                  );
+                })()}
                 <UserBadge badgeType={(account as any).posterBadgeType} size={14} />
                 <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                   <Eye className="h-3 w-3" />
