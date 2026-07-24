@@ -7,7 +7,6 @@ import { db, usersTable, ipBansTable } from "@workspace/db";
 import { eq, or } from "drizzle-orm";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/auth";
-import { isVpnOrProxy } from "../lib/ipCheck";
 import {
   sendEmail,
   twoFactorEmailHtml,
@@ -52,12 +51,6 @@ router.post("/register", async (req, res) => {
     return;
   }
 
-  // Block VPN / proxy / hosting IPs
-  const vpn = await isVpnOrProxy(ip);
-  if (vpn) {
-    res.status(403).json({ error: "VPN and proxy connections are not allowed. Please disable your VPN and try again." });
-    return;
-  }
 
   const existing = await db.select().from(usersTable).where(eq(usersTable.username, username)).limit(1);
   if (existing.length > 0) {
