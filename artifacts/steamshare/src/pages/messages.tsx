@@ -291,6 +291,12 @@ export default function Messages() {
     }
   }, [location]);
 
+  const { data: conversations } = useQuery({
+    queryKey: ["conversations"],
+    queryFn: fetchConversations,
+    refetchInterval: 20_000,
+  });
+
   // When conversations load (or selectedUserId changes), sync premium data
   // for conversations opened via URL params (where selectUser() was never called).
   useEffect(() => {
@@ -304,12 +310,6 @@ export default function Messages() {
     setSelectedIsMod(!!conv.partner_is_moderator);
     setSelectedAvatarUrl(conv.partner_avatar_url ?? null);
   }, [conversations, selectedUserId]);
-
-  const { data: conversations } = useQuery({
-    queryKey: ["conversations"],
-    queryFn: fetchConversations,
-    refetchInterval: 20_000,
-  });
 
   const { data: messages, refetch: refetchMessages } = useQuery({
     queryKey: ["messages", selectedUserId],
