@@ -426,7 +426,15 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
                   {profileOpen && (
                     <div className="absolute right-0 top-11 w-48 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden py-1">
                       <div className="px-4 py-2.5 border-b border-border">
-                        <p className="text-sm font-semibold truncate">{user.username}</p>
+                        {(() => {
+                          const nc = (user as any).nameColor;
+                          const cls = nc === "rainbow" ? "rainbow-text" : nc === "fire" ? "fire-text" : nc === "ocean" ? "ocean-text" : nc === "galaxy" ? "galaxy-text" : nc === "neon" ? "neon-text" : nc === "gold" ? "gold-text" : null;
+                          return (
+                            <p className={`text-sm font-semibold${cls ? ` ${cls}` : ""}`} style={!cls && nc ? { color: nc } : undefined}>
+                              {(user as any).displayName || user.username}
+                            </p>
+                          );
+                        })()}
                         <p className="text-xs text-primary">{user.points} pts · Lv {user.level}</p>
                       </div>
                       <Link href={`/profile/${user.id}`}>

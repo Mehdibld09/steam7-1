@@ -68,10 +68,8 @@ export default function Leaderboard() {
               const nc = user.nameColor;
               const cls = nc === "rainbow" ? "rainbow-text" : nc === "fire" ? "fire-text" : nc === "ocean" ? "ocean-text" : nc === "galaxy" ? "galaxy-text" : nc === "neon" ? "neon-text" : nc === "gold" ? "gold-text" : null;
               return (
-                <span className={`font-semibold text-sm sm:text-base truncate max-w-[100px] sm:max-w-none ${!cls && !nc && highlight ? "text-primary" : !cls && !nc ? "group-hover:text-primary transition-colors" : ""}`}>
-                  <span className={cls ?? undefined} style={!cls && nc ? { color: nc } : undefined}>
-                    {user.displayName || user.username}
-                  </span>
+                <span className={`font-semibold text-sm sm:text-base max-w-[100px] sm:max-w-none${cls ? ` ${cls}` : ""} ${!cls && !nc && highlight ? "text-primary" : !cls && !nc ? "group-hover:text-primary transition-colors" : ""}`} style={!cls && nc ? { color: nc } : undefined}>
+                  {user.displayName || user.username}
                   {highlight && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
                 </span>
               );

@@ -42,7 +42,7 @@ router.get("/products/:id", async (req, res) => {
     return;
   }
 
-  const reviews = await db
+  const rawReviews = await db
     .select({
       id: productReviewsTable.id,
       rating: productReviewsTable.rating,
@@ -50,12 +50,28 @@ router.get("/products/:id", async (req, res) => {
       createdAt: productReviewsTable.createdAt,
       userId: productReviewsTable.userId,
       username: usersTable.username,
+      displayName: usersTable.displayName,
       avatarUrl: usersTable.avatarUrl,
+      nameColor: usersTable.nameColor,
+      badgeType: usersTable.badgeType,
+      premiumTier: usersTable.premiumTier,
+      premiumExpiresAt: usersTable.premiumExpiresAt,
     })
     .from(productReviewsTable)
     .leftJoin(usersTable, eq(productReviewsTable.userId, usersTable.id))
     .where(eq(productReviewsTable.productId, id))
     .orderBy(desc(productReviewsTable.createdAt));
+
+  const now = new Date();
+  const reviews = rawReviews.map((r) => {
+    const active = r.premiumTier && r.premiumExpiresAt && new Date(r.premiumExpiresAt) > now;
+    return {
+      ...r,
+      username: r.displayName || r.username,
+      nameColor: active ? r.nameColor : null,
+      badgeType: active ? r.badgeType : null,
+    };
+  });
 
   const avgRating = reviews.length ? +(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : 0;
 

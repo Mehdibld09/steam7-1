@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ShoppingBag, Star, ArrowLeft, MessageSquare, Package, AlertCircle, CheckCircle, Coins, CreditCard } from "lucide-react";
+import { UserBadge } from "@/components/user-badge";
 
 // ── API helpers ──
 async function fetchProduct(id: number) {
@@ -333,7 +334,16 @@ export default function ProductDetail() {
                 <div key={r.id} className="bg-card border border-border rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">{r.username || "User"}</span>
+                      {(() => {
+                        const nc = r.nameColor;
+                        const cls = nc === "rainbow" ? "rainbow-text" : nc === "fire" ? "fire-text" : nc === "ocean" ? "ocean-text" : nc === "galaxy" ? "galaxy-text" : nc === "neon" ? "neon-text" : nc === "gold" ? "gold-text" : null;
+                        return (
+                          <span className={`text-sm font-semibold${cls ? ` ${cls}` : ""}`} style={!cls && nc ? { color: nc } : undefined}>
+                            {r.username || "User"}
+                          </span>
+                        );
+                      })()}
+                      {r.badgeType && <UserBadge badgeType={r.badgeType} size={13} />}
                       <StarRating rating={r.rating} size={12} />
                     </div>
                     <span className="text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleDateString()}</span>

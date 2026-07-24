@@ -32,7 +32,7 @@ router.get("/", async (req, res) => {
       content: commentsTable.content,
       likesCount: commentsTable.likesCount,
       createdAt: commentsTable.createdAt,
-      username: usersTable.username,
+      username: sql<string>`COALESCE(${usersTable.displayName}, ${usersTable.username})`,
       avatarUrl: usersTable.avatarUrl,
       premiumTier: usersTable.premiumTier,
       premiumExpiresAt: usersTable.premiumExpiresAt,
@@ -112,7 +112,7 @@ router.post("/", requireAuth, async (req, res) => {
 
   const [user] = await db
     .select({
-      username: usersTable.username,
+      username: sql<string>`COALESCE(${usersTable.displayName}, ${usersTable.username})`,
       avatarUrl: usersTable.avatarUrl,
       premiumTier: usersTable.premiumTier,
       premiumExpiresAt: usersTable.premiumExpiresAt,

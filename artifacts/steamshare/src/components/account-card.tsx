@@ -85,10 +85,8 @@ export function AccountCard({ account, isAdmin, onPin, onUnpin }: AccountCardPro
                   const nc = (account as any).posterNameColor;
                   const cls = nc === "rainbow" ? "rainbow-text" : nc === "fire" ? "fire-text" : nc === "ocean" ? "ocean-text" : nc === "galaxy" ? "galaxy-text" : nc === "neon" ? "neon-text" : nc === "gold" ? "gold-text" : null;
                   return (
-                    <span className="text-xs font-medium truncate max-w-[80px]">
-                      <span className={cls ?? undefined} style={!cls && nc ? { color: nc } : undefined}>
-                        {account.posterUsername}
-                      </span>
+                    <span className={`text-xs font-medium max-w-[80px]${cls ? ` ${cls}` : ""}`} style={!cls && nc ? { color: nc } : undefined}>
+                      {account.posterUsername}
                     </span>
                   );
                 })()}

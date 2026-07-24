@@ -99,7 +99,7 @@ router.get("/", async (req, res) => {
         workingVotes: accountsTable.workingVotes,
         notWorkingVotes: accountsTable.notWorkingVotes,
         createdAt: accountsTable.createdAt,
-        posterUsername: usersTable.username,
+        posterUsername: sql<string>`COALESCE(${usersTable.displayName}, ${usersTable.username})`,
         posterAvatarUrl: usersTable.avatarUrl,
         posterIsModerator: usersTable.isModerator,
         posterIsAdmin: usersTable.isAdmin,
@@ -232,13 +232,14 @@ router.post("/", requireAuth, async (req, res) => {
     }
   }
 
-  const [user] = await db.select({ username: usersTable.username, avatarUrl: usersTable.avatarUrl, isAdmin: usersTable.isAdmin, isModerator: usersTable.isModerator })
+  const [user] = await db.select({ username: usersTable.username, displayName: usersTable.displayName, avatarUrl: usersTable.avatarUrl, isAdmin: usersTable.isAdmin, isModerator: usersTable.isModerator })
     .from(usersTable).where(eq(usersTable.id, userId));
 
+  const effectiveName = user?.displayName || user?.username || "";
   res.status(201).json({
     ...account,
-    username: user?.username ?? "",
-    posterUsername: user?.username ?? "",
+    username: effectiveName,
+    posterUsername: effectiveName,
     posterAvatarUrl: user?.avatarUrl ?? null,
     posterIsAdmin: user?.isAdmin ?? false,
     posterIsModerator: user?.isModerator ?? false,
@@ -268,7 +269,7 @@ router.get("/:accountId", async (req, res) => {
       viewCount: accountsTable.viewCount,
       unlockMethod: accountsTable.unlockMethod,
       createdAt: accountsTable.createdAt,
-      posterUsername: usersTable.username,
+      posterUsername: sql<string>`COALESCE(${usersTable.displayName}, ${usersTable.username})`,
       posterAvatarUrl: usersTable.avatarUrl,
       posterIsAdmin: usersTable.isAdmin,
       posterIsModerator: usersTable.isModerator,
