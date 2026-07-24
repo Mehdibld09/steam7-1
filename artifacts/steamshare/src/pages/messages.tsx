@@ -285,9 +285,25 @@ export default function Messages() {
     if (userId && username) {
       setSelectedUserId(userId);
       setSelectedUsername(decodeURIComponent(username));
+      setSelectedNameColor(null);
+      setSelectedBadgeType(null);
       setMobileView("chat");
     }
   }, [location]);
+
+  // When conversations load (or selectedUserId changes), sync premium data
+  // for conversations opened via URL params (where selectUser() was never called).
+  useEffect(() => {
+    if (!selectedUserId || !conversations) return;
+    const conv = conversations.find((c) => c.partner_id === selectedUserId);
+    if (!conv) return;
+    const premiumActive = conv.partner_premium_tier && (!conv.partner_premium_expires_at || new Date(conv.partner_premium_expires_at) > new Date());
+    setSelectedNameColor(premiumActive ? (conv.partner_name_color ?? null) : null);
+    setSelectedBadgeType(premiumActive ? (conv.partner_badge_type ?? null) : null);
+    setSelectedIsAdmin(!!conv.partner_is_admin);
+    setSelectedIsMod(!!conv.partner_is_moderator);
+    setSelectedAvatarUrl(conv.partner_avatar_url ?? null);
+  }, [conversations, selectedUserId]);
 
   const { data: conversations } = useQuery({
     queryKey: ["conversations"],

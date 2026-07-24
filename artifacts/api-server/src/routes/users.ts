@@ -47,7 +47,7 @@ router.get("/leaderboard", async (req, res) => {
   const now = new Date();
   res.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
   res.json(users.map((u) => {
-    const active = u.premiumTier && u.premiumExpiresAt && new Date(u.premiumExpiresAt) > now;
+    const active = u.premiumTier && (!u.premiumExpiresAt || new Date(u.premiumExpiresAt) > now);
     return {
       ...u,
       nameColor: active ? u.nameColor : null,
@@ -99,7 +99,7 @@ router.get("/:userId", async (req, res) => {
   ]);
 
   const now = new Date();
-  const premiumActive = user.premiumTier && user.premiumExpiresAt && new Date(user.premiumExpiresAt) > now;
+  const premiumActive = user.premiumTier && (!user.premiumExpiresAt || new Date(user.premiumExpiresAt) > now);
 
   res.json({
     ...user,
