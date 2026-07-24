@@ -98,11 +98,12 @@ app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
 app.use("/api/auth/forgot-password", authLimiter);
 
-// Limit account uploads: max 10 new listings per IP per hour (applies to POST only)
+// Limit account uploads: max 10 new listings per IP per hour
+// Only applies to POST /api/accounts (exact) — not likes, comments, replies, etc.
 const uploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
-  skip: (req) => req.method !== "POST",
+  skip: (req) => req.method !== "POST" || req.path !== "/",
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many uploads. Please wait before listing more accounts." },
