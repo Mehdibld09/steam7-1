@@ -1,0 +1,42 @@
+add toggle to turn register 2fa off in site settings in email setting
+
+10 minutes ago
+
+8 actions
+Let me look at the email settings section in admin.tsx and the registration 2FA flow.
+
+
+3 actions
+Now I have a clear picture. Let me read the top of admin.tsx to check imports, then make all the changes in parallel.
+
+
+5 actions
+Good, switch.tsx exists. Now I'll make all four changes in parallel.
+
+
+4 actions
+Now let me update the auth.ts registration route and the admin.tsx frontend toggle.
+
+
+3 actions
+Now let me update the registration route in auth.ts and add the toggle UI in admin.tsx:
+
+
+2 actions
+Now let me add the toggle to the SmtpSettingsSection in admin.tsx and check the API server logs:
+
+
+4 actions
+The new artifacts/api-server: API Server workflow is running my updated code. I still need to add the actual toggle UI to the SmtpSettingsSection. Let me also restart the original API Server workflow (it failed only because the duplicate took the port first).
+
+
+5 actions
+The artifacts/api-server: API Server workflow is running with the updated code — the original API Server workflow fails only because that one already bound port 8080 first, which is harmless.
+
+The feature is done. Here's what was added:
+
+Backend (artifacts/api-server/src/routes/siteSettings.ts): The SMTP GET endpoint now returns register_2fa_enabled (defaults to true), and the PUT endpoint saves it as a site setting key.
+
+Backend (artifacts/api-server/src/routes/auth.ts): The registration route now checks the register_2fa_enabled setting before doing anything with email codes. When it's off, the user is inserted with emailVerified: true and immediately logged in — no code sent, no pending session, no verification step.
+
+Frontend (artifacts/steamshare/src/pages/admin.tsx): A toggle row appears in the Email (SMTP) section above the SMTP fields, labeled "Require 2FA on registration", with a description explaining what it does. It's saved together with the rest of the SMTP settings via the existing Save button.

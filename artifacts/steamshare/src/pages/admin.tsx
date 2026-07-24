@@ -13,6 +13,7 @@ import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -2082,7 +2083,7 @@ function SmtpSettingsSection() {
     queryFn: async () => {
       const res = await fetch("/api/site-settings/smtp", { credentials: "include" });
       if (!res.ok) return null;
-      return res.json() as Promise<{ smtp_host: string; smtp_port: string; smtp_user: string; smtp_pass: string; smtp_from: string; configured: boolean }>;
+      return res.json() as Promise<{ smtp_host: string; smtp_port: string; smtp_user: string; smtp_pass: string; smtp_from: string; configured: boolean; register_email_verification_enabled: boolean }>;
     },
   });
 
@@ -2091,6 +2092,7 @@ function SmtpSettingsSection() {
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
   const [from, setFrom] = useState("");
+  const [emailVerifEnabled, setEmailVerifEnabled] = useState(true);
   const [testEmail, setTestEmail] = useState("");
   const smtpInitialized = useState(false);
 
@@ -2101,6 +2103,7 @@ function SmtpSettingsSection() {
     setUser(smtpData.smtp_user);
     setPass(smtpData.smtp_pass);
     setFrom(smtpData.smtp_from);
+    setEmailVerifEnabled(smtpData.register_email_verification_enabled ?? true);
   }
 
   const saveMutation = useMutation({
@@ -2109,7 +2112,7 @@ function SmtpSettingsSection() {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ smtp_host: host, smtp_port: port, smtp_user: user, smtp_pass: pass, smtp_from: from }),
+        body: JSON.stringify({ smtp_host: host, smtp_port: port, smtp_user: user, smtp_pass: pass, smtp_from: from, register_email_verification_enabled: emailVerifEnabled }),
       });
       if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Failed"); }
       return res.json();
@@ -2150,6 +2153,18 @@ function SmtpSettingsSection() {
         Used to send 2FA login codes to users. Works with Gmail, Outlook, or any SMTP provider.<br />
         <span className="text-xs">For Gmail: use an <b>App Password</b> (not your regular password) — create one at Google Account → Security → 2-Step Verification → App passwords.</span>
       </p>
+      {/* Email verification toggle */}
+      <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 mb-4">
+        <div>
+          <p className="text-sm font-medium text-foreground">Require email verification on registration</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {emailVerifEnabled
+              ? "New users must verify their email before their account is activated."
+              : "Disabled — users can register and log in immediately without email verification."}
+          </p>
+        </div>
+        <Switch checked={emailVerifEnabled} onCheckedChange={setEmailVerifEnabled} />
+      </div>
       <div className="space-y-3">
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-2">

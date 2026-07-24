@@ -74,7 +74,38 @@ router.post("/register", async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const startingPoints = await getSetting("points_registration");
+  const [startingPoints, emailVerifSetting] = await Promise.all([
+    getSetting("points_registration"),
+    getSetting("register_email_verification_enabled"),
+  ]);
+
+  // Check if email verification is disabled in site settings
+  const emailVerificationEnabled = emailVerifSetting !== "0";
+
+  if (!emailVerificationEnabled) {
+    // Skip email verification — insert user as already verified and log them in immediately
+    const [user] = await db
+      .insert(usersTable)
+      .values({
+        username,
+        email,
+        passwordHash,
+        registrationIp: ip,
+        points: startingPoints,
+        emailVerified: true,
+      })
+      .returning();
+
+    req.session.regenerate((err: any) => {
+      if (err) { res.status(500).json({ error: "Session error" }); return; }
+      (req.session as any).userId = user.id;
+      req.session.save((saveErr: any) => {
+        if (saveErr) { res.status(500).json({ error: "Session error" }); return; }
+        res.status(201).json({ user: { id: user.id, username: user.username, email: user.email, role: user.role } });
+      });
+    });
+    return;
+  }
 
   // Generate email verification token
   const verificationToken = crypto.randomBytes(32).toString("hex");
