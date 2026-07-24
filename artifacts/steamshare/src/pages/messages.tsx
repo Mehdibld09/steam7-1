@@ -405,7 +405,7 @@ export default function Messages() {
                             const premiumActive = conv.partner_premium_tier && (!conv.partner_premium_expires_at || new Date(conv.partner_premium_expires_at) > new Date());
                             const nc = premiumActive ? conv.partner_name_color : null;
                             const cls = nc === "rainbow" ? "rainbow-text" : nc === "fire" ? "fire-text" : nc === "ocean" ? "ocean-text" : nc === "galaxy" ? "galaxy-text" : nc === "neon" ? "neon-text" : nc === "gold" ? "gold-text" : null;
-                            return <span className="font-semibold text-sm truncate"><span className={cls ?? undefined} style={!cls && nc ? { color: nc } : undefined}>{conv.partner_username}</span></span>;
+                            return <span className={`font-semibold text-sm${cls ? ` ${cls}` : ""}`} style={!cls && nc ? { color: nc } : undefined}>{conv.partner_username}</span>;
                           })()}
                           {(() => {
                             const premiumActive = conv.partner_premium_tier && (!conv.partner_premium_expires_at || new Date(conv.partner_premium_expires_at) > new Date());
@@ -462,11 +462,10 @@ export default function Messages() {
                         return (
                           <Link
                             href={`/profile/${selectedUserId}`}
-                            className="font-semibold hover:opacity-80 transition-opacity truncate"
+                            className={`font-semibold hover:opacity-80 transition-opacity${cls ? ` ${cls}` : ""}`}
+                            style={!cls && nc ? { color: nc } : undefined}
                           >
-                            <span className={cls ?? undefined} style={!cls && nc ? { color: nc } : undefined}>
-                              {selectedUsername}
-                            </span>
+                            {selectedUsername}
                           </Link>
                         );
                       })()
