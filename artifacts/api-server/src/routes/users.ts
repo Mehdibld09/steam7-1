@@ -7,13 +7,25 @@ const router = express.Router();
 
 router.get("/leaderboard/rank", async (req, res) => {
   const userId = req.session?.userId;
-  if (!userId) { res.status(401).json({ error: "Not authenticated" }); return; }
-  const [me] = await db.select({ xp: usersTable.xp }).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
-  if (!me) { res.status(404).json({ error: "User not found" }); return; }
+  if (!userId) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  const [me] = await db
+    .select({ xp: usersTable.xp })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+  if (!me) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
   const [{ rank }] = await db
     .select({ rank: sql<number>`count(*) + 1` })
     .from(usersTable)
-    .where(sql`${usersTable.xp} > ${me.xp} AND ${usersTable.isBanned} = false AND ${usersTable.email} != 'adminbot@system.internal'`);
+    .where(
+      sql`${usersTable.xp} > ${me.xp} AND ${usersTable.isBanned} = false AND ${usersTable.email} != 'adminbot@system.internal'`,
+    );
   res.json({ rank: Number(rank), xp: me.xp });
 });
 
@@ -40,21 +52,27 @@ router.get("/leaderboard", async (req, res) => {
       badgeType: usersTable.badgeType,
     })
     .from(usersTable)
-    .where(sql`${usersTable.isBanned} = false AND ${usersTable.email} != 'adminbot@system.internal'`)
+    .where(
+      sql`${usersTable.isBanned} = false AND ${usersTable.email} != 'adminbot@system.internal'`,
+    )
     .orderBy(desc(usersTable.xp))
     .limit(limit);
 
   const now = new Date();
   res.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
-  res.json(users.map((u) => {
-    const active = u.premiumTier && (!u.premiumExpiresAt || new Date(u.premiumExpiresAt) > now);
-    return {
-      ...u,
-      nameColor: active ? u.nameColor : null,
-      badgeType: active ? u.badgeType : null,
-      premiumTier: active ? u.premiumTier : null,
-    };
-  }));
+  res.json(
+    users.map((u) => {
+      const active =
+        u.premiumTier &&
+        (!u.premiumExpiresAt || new Date(u.premiumExpiresAt) > now);
+      return {
+        ...u,
+        nameColor: active ? u.nameColor : null,
+        badgeType: active ? u.badgeType : null,
+        premiumTier: active ? u.premiumTier : null,
+      };
+    }),
+  );
 });
 
 router.get("/:userId", async (req, res) => {
@@ -89,17 +107,21 @@ router.get("/:userId", async (req, res) => {
   }
 
   const [[{ totalAccounts }], [{ totalLikesReceived }]] = await Promise.all([
-    db.select({ totalAccounts: sql<number>`count(*)` })
+    db
+      .select({ totalAccounts: sql<number>`count(*)` })
       .from(accountsTable)
       .where(eq(accountsTable.userId, userId)),
-    db.select({ totalLikesReceived: sql<number>`count(*)` })
+    db
+      .select({ totalLikesReceived: sql<number>`count(*)` })
       .from(likesTable)
       .leftJoin(accountsTable, eq(likesTable.targetId, accountsTable.id))
       .where(eq(accountsTable.userId, userId)),
   ]);
 
   const now = new Date();
-  const premiumActive = user.premiumTier && (!user.premiumExpiresAt || new Date(user.premiumExpiresAt) > now);
+  const premiumActive =
+    user.premiumTier &&
+    (!user.premiumExpiresAt || new Date(user.premiumExpiresAt) > now);
 
   res.json({
     ...user,
@@ -127,20 +149,33 @@ router.get("/:userId/accounts", async (req, res) => {
       claimsCount: accountsTable.claimsCount,
       viewCount: accountsTable.viewCount,
       createdAt: accountsTable.createdAt,
-      posterUsername: usersTable.username,
+      posterUsername: sql<string>`COALESCE(${usersTable.displayName}, ${usersTable.username})`,
       posterAvatarUrl: usersTable.avatarUrl,
+      posterPremiumTier: usersTable.premiumTier,
+      posterPremiumExpiresAt: usersTable.premiumExpiresAt,
+      posterNameColor: usersTable.nameColor,
+      posterBadgeType: usersTable.badgeType,
     })
     .from(accountsTable)
     .leftJoin(usersTable, eq(accountsTable.userId, usersTable.id))
     .where(eq(accountsTable.userId, userId))
     .orderBy(desc(accountsTable.createdAt));
 
+  const now = new Date();
   res.json(
-    accounts.map((a) => ({
-      ...a,
-      username: a.posterUsername ?? "",
-      userHasLiked: false,
-    })),
+    accounts.map((a) => {
+      const premiumActive =
+        a.posterPremiumTier &&
+        (!a.posterPremiumExpiresAt || new Date(a.posterPremiumExpiresAt) > now);
+
+      return {
+        ...a,
+        username: a.posterUsername ?? "",
+        userHasLiked: false,
+        posterNameColor: premiumActive ? a.posterNameColor : null,
+        posterBadgeType: premiumActive ? a.posterBadgeType : null,
+      };
+    }),
   );
 });
 

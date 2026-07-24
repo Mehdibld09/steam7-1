@@ -1094,7 +1094,8 @@ components:
 
     RegistrationChallenge:
       type: object
-      required: [requiresRegistrationTwoFactor, requiresEmailVerification, email]
+      required:
+        [requiresRegistrationTwoFactor, requiresEmailVerification, email]
       properties:
         requiresRegistrationTwoFactor:
           type: boolean
@@ -1174,7 +1175,8 @@ components:
 
     User:
       type: object
-      required: [id, username, email, points, xp, level, isAdmin, isBanned, createdAt]
+      required:
+        [id, username, email, points, xp, level, isAdmin, isBanned, createdAt]
       properties:
         id:
           type: integer
@@ -1231,12 +1233,24 @@ components:
 
     UserProfile:
       type: object
-      required: [id, username, xp, level, points, totalAccounts, totalLikesReceived, createdAt]
+      required:
+        [
+          id,
+          username,
+          xp,
+          level,
+          points,
+          totalAccounts,
+          totalLikesReceived,
+          createdAt,
+        ]
       properties:
         id:
           type: integer
         username:
           type: string
+        displayName:
+          type: ["string", "null"]
         avatarUrl:
           type: ["string", "null"]
         points:
@@ -1259,7 +1273,20 @@ components:
 
     Account:
       type: object
-      required: [id, userId, username, title, description, games, pointsCost, isAvailable, likesCount, claimsCount, createdAt]
+      required:
+        [
+          id,
+          userId,
+          username,
+          title,
+          description,
+          games,
+          pointsCost,
+          isAvailable,
+          likesCount,
+          claimsCount,
+          createdAt,
+        ]
       properties:
         id:
           type: integer
@@ -1270,6 +1297,10 @@ components:
         posterUsername:
           type: string
         posterAvatarUrl:
+          type: ["string", "null"]
+        posterNameColor:
+          type: ["string", "null"]
+        posterBadgeType:
           type: ["string", "null"]
         title:
           type: string
@@ -1321,7 +1352,8 @@ components:
 
     AccountInput:
       type: object
-      required: [title, description, games, pointsCost, steamUsername, steamPassword]
+      required:
+        [title, description, games, pointsCost, steamUsername, steamPassword]
       properties:
         title:
           type: string
@@ -1359,7 +1391,8 @@ components:
 
     Comment:
       type: object
-      required: [id, accountId, userId, username, content, likesCount, createdAt]
+      required:
+        [id, accountId, userId, username, content, likesCount, createdAt]
       properties:
         id:
           type: integer
@@ -1403,7 +1436,8 @@ components:
 
     AdLink:
       type: object
-      required: [id, code, pointsReward, maxUses, usesCount, isActive, createdAt]
+      required:
+        [id, code, pointsReward, maxUses, usesCount, isActive, createdAt]
       properties:
         id:
           type: integer
@@ -1464,7 +1498,14 @@ components:
 
     SiteStats:
       type: object
-      required: [totalUsers, totalAccounts, totalClaims, totalPointsCirculating, topGames]
+      required:
+        [
+          totalUsers,
+          totalAccounts,
+          totalClaims,
+          totalPointsCirculating,
+          topGames,
+        ]
       properties:
         totalUsers:
           type: integer
@@ -1537,7 +1578,20 @@ components:
 
     Giveaway:
       type: object
-      required: [id, createdBy, title, description, prize, taskDescription, maxEntries, entriesCount, endDate, isActive, createdAt]
+      required:
+        [
+          id,
+          createdBy,
+          title,
+          description,
+          prize,
+          taskDescription,
+          maxEntries,
+          entriesCount,
+          endDate,
+          isActive,
+          createdAt,
+        ]
       properties:
         id:
           type: integer

@@ -10,6 +10,8 @@ export interface UserProfile {
   id: number;
   username: string;
   /** @nullable */
+  displayName?: string | null;
+  /** @nullable */
   avatarUrl?: string | null;
   points: number;
   xp: number;

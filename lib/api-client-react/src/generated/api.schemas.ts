@@ -108,6 +108,8 @@ export interface UserProfile {
   id: number;
   username: string;
   /** @nullable */
+  displayName?: string | null;
+  /** @nullable */
   avatarUrl?: string | null;
   points: number;
   xp: number;
@@ -127,6 +129,7 @@ export const AccountUnlockMethod = {
   login: 'login',
   like: 'like',
   comment: 'comment',
+  vip: 'vip',
 } as const;
 
 export interface Account {
@@ -136,6 +139,10 @@ export interface Account {
   posterUsername?: string;
   /** @nullable */
   posterAvatarUrl?: string | null;
+  /** @nullable */
+  posterNameColor?: string | null;
+  /** @nullable */
+  posterBadgeType?: string | null;
   title: string;
   description: string;
   games: string[];
@@ -166,6 +173,7 @@ export const AccountInputUnlockMethod = {
   login: 'login',
   like: 'like',
   comment: 'comment',
+  vip: 'vip',
 } as const;
 
 export interface AccountInput {

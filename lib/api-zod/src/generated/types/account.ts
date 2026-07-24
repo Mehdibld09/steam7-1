@@ -14,6 +14,10 @@ export interface Account {
   posterUsername?: string;
   /** @nullable */
   posterAvatarUrl?: string | null;
+  /** @nullable */
+  posterNameColor?: string | null;
+  /** @nullable */
+  posterBadgeType?: string | null;
   title: string;
   description: string;
   games: string[];
