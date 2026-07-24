@@ -117,7 +117,7 @@ export default function AccountDetail() {
   const id = parseInt(params.id || "0");
   const [, navigate] = useLocation();
   const { data: user } = useGetMe();
-  const { data: account, isLoading: accountLoading } = useGetAccount(id, { query: { queryKey: getGetAccountQueryKey(id), refetchOnWindowFocus: false } });
+  const { data: account, isLoading: accountLoading, error: accountError } = useGetAccount(id, { query: { queryKey: getGetAccountQueryKey(id), refetchOnWindowFocus: false, retry: false } });
   const { data: comments, isLoading: commentsLoading } = useListComments(id);
 
   const queryClient = useQueryClient();
@@ -270,15 +270,27 @@ export default function AccountDetail() {
     </Layout>
   );
 
-  if (!account) return (
-    <Layout>
-      <div className="container mx-auto px-4 py-20 text-center">
-        <h2 className="text-2xl font-bold mb-2">Account Not Found</h2>
-        <p className="text-muted-foreground mb-6">This account may have been removed.</p>
-        <Link href="/browse"><Button>Browse Accounts</Button></Link>
-      </div>
-    </Layout>
-  );
+  if (!account) {
+    const is403 = (accountError as any)?.status === 403;
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-20 text-center">
+          {is403 ? (
+            <>
+              <h2 className="text-2xl font-bold mb-2">VIP Members Only</h2>
+              <p className="text-muted-foreground mb-6">This listing is only available to users with an active VIP subscription.</p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold mb-2">Account Not Found</h2>
+              <p className="text-muted-foreground mb-6">This account may have been removed.</p>
+            </>
+          )}
+          <Link href="/browse"><Button>Browse Accounts</Button></Link>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
