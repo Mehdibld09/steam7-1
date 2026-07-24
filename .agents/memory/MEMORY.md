@@ -1,2 +1,3 @@
 - [Security hardening decisions](security-hardening.md) — XP farming fix, SSRF via avatar URL, ban bypass, session fixation, email whitelist, IP tracking all implemented.
 - [Supabase/Vercel database connectivity](supabase-vercel-connection.md) — use Supabase's pooler URL for Vercel serverless Postgres access; direct hosts can time out.
+- [Steam Family detection](steam-family-detection.md) — preserve the legacy steam3 detector and its intentional Family Share classification behavior.
