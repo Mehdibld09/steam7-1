@@ -52,6 +52,9 @@ router.get("/:code/redeem", requireAuth, async (req, res) => {
     res.status(400).json({ error: "This ad link has reached its usage limit" });
     return;
   }
+  // Note: per-user uniqueness is enforced by a DB constraint (unique index on
+  // ad_link_id + user_id), so the only remaining race is the global usesCount cap.
+  // The usesCount increment below uses a conditional WHERE to prevent overflow.
 
   // Atomically insert the redemption record. The DB-level unique constraint on
   // (ad_link_id, user_id) guarantees only one redemption per user per link even
@@ -78,7 +81,7 @@ router.get("/:code/redeem", requireAuth, async (req, res) => {
   await db
     .update(adLinksTable)
     .set({ usesCount: sql`${adLinksTable.usesCount} + 1` })
-    .where(eq(adLinksTable.id, link.id));
+    .where(and(eq(adLinksTable.id, link.id), sql`${adLinksTable.usesCount} < ${link.maxUses}`));
 
   const xpAdlink = await getSetting("xp_redeem_adlink");
   const [updatedUser] = await db

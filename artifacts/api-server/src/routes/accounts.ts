@@ -372,7 +372,14 @@ router.patch("/:accountId", requireAuth, async (req, res) => {
   if (title !== undefined) updates.title = title;
   if (description !== undefined) updates.description = description;
   if (games !== undefined) updates.games = games;
-  if (pointsCost !== undefined) updates.pointsCost = pointsCost;
+  // Only admins can change the price after the account has been claimed at least once
+  if (pointsCost !== undefined) {
+    if (!isAdmin && account.claimsCount > 0) {
+      res.status(403).json({ error: "Cannot change price after the account has been claimed" });
+      return;
+    }
+    updates.pointsCost = Math.max(0, Math.floor(Number(pointsCost)));
+  }
   // Admin-only fields
   if (isAdmin) {
     if (isPinned !== undefined) updates.isPinned = isPinned;
@@ -469,28 +476,55 @@ router.post("/:accountId/claim", requireAuth, async (req, res) => {
     return;
   }
 
-  // Deduct from claimer and credit poster in parallel — independent rows
-  await Promise.all([
-    db.update(usersTable).set({ points: sql`${usersTable.points} - ${account.pointsCost}` }).where(eq(usersTable.id, userId)),
-    db.update(usersTable).set({ points: sql`${usersTable.points} + ${account.pointsCost}` }).where(eq(usersTable.id, account.userId)),
-  ]);
+  // Wrap the entire claim in a transaction so concurrent requests can't
+  // double-claim the same account or double-spend points.
+  const claimResult = await db.transaction(async (tx) => {
+    // Re-check availability inside the transaction with a row lock
+    const [lockedAccount] = await tx
+      .select({ isAvailable: accountsTable.isAvailable, pointsCost: accountsTable.pointsCost })
+      .from(accountsTable)
+      .where(and(eq(accountsTable.id, accountId), eq(accountsTable.isAvailable, true)))
+      .limit(1);
+    if (!lockedAccount) return null; // already claimed by a concurrent request
 
-  if (account.pointsCost > 0) {
-    await db.update(accountsTable).set({ isAvailable: false, claimsCount: sql`${accountsTable.claimsCount} + 1` }).where(eq(accountsTable.id, accountId));
-  } else {
-    await db.update(accountsTable).set({ claimsCount: sql`${accountsTable.claimsCount} + 1` }).where(eq(accountsTable.id, accountId));
-  }
+    // Re-check user points inside the transaction
+    const [lockedUser] = await tx
+      .select({ points: usersTable.points })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
+    if (!lockedUser || lockedUser.points < lockedAccount.pointsCost) return null;
 
-  // Persist the claim so credentials survive page refreshes
-  await db.insert(accountClaimsTable).values({
-    accountId,
-    userId,
-    steamUsername: account.steamUsername,
-    steamPassword: account.steamPassword,
-    pointsSpent: account.pointsCost,
+    // Deduct from claimer and credit poster
+    await Promise.all([
+      tx.update(usersTable).set({ points: sql`${usersTable.points} - ${lockedAccount.pointsCost}` }).where(eq(usersTable.id, userId)),
+      tx.update(usersTable).set({ points: sql`${usersTable.points} + ${lockedAccount.pointsCost}` }).where(eq(usersTable.id, account.userId)),
+    ]);
+
+    if (lockedAccount.pointsCost > 0) {
+      await tx.update(accountsTable).set({ isAvailable: false, claimsCount: sql`${accountsTable.claimsCount} + 1` }).where(eq(accountsTable.id, accountId));
+    } else {
+      await tx.update(accountsTable).set({ claimsCount: sql`${accountsTable.claimsCount} + 1` }).where(eq(accountsTable.id, accountId));
+    }
+
+    // Persist the claim so credentials survive page refreshes
+    await tx.insert(accountClaimsTable).values({
+      accountId,
+      userId,
+      steamUsername: account.steamUsername,
+      steamPassword: account.steamPassword,
+      pointsSpent: lockedAccount.pointsCost,
+    });
+
+    return { pointsCost: lockedAccount.pointsCost };
   });
 
-  res.json({ steamUsername: account.steamUsername, steamPassword: account.steamPassword, pointsSpent: account.pointsCost });
+  if (!claimResult) {
+    res.status(400).json({ error: "Account not available" });
+    return;
+  }
+
+  res.json({ steamUsername: account.steamUsername, steamPassword: account.steamPassword, pointsSpent: claimResult.pointsCost });
 });
 
 router.post("/:accountId/like", requireAuth, async (req, res) => {

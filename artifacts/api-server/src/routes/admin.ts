@@ -61,6 +61,10 @@ router.get("/users", requireModOrAdmin, async (req, res) => {
 router.post("/users/:userId/ban", requireModOrAdmin, async (req, res) => {
   const userId = parseInt(req.params.userId, 10);
   const { durationHours, reason } = req.body as { durationHours?: number; reason?: string };
+  if (durationHours !== undefined && (typeof durationHours !== "number" || durationHours <= 0)) {
+    res.status(400).json({ error: "durationHours must be a positive number" });
+    return;
+  }
 
   // Moderators cannot ban other moderators or admins
   const [target] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);

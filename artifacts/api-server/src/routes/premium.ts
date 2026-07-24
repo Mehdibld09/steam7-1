@@ -1,7 +1,7 @@
 // @ts-nocheck
 import express from "express";
 import { db, usersTable, siteSettingsTable, premiumCodesTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { requireAuth, requireAdmin } from "../middlewares/auth";
 import { getSetting, getAllXpSettings } from "../lib/settings";
 
@@ -228,14 +228,23 @@ router.post("/redeem", requireAuth, async (req, res) => {
 
   // Redeem codes always start fresh from now — never stack on existing subscription.
   const expiresAt = new Date(Date.now() + duration);
-  const newUsesCount = premCode.usesCount + 1;
-  await db.update(usersTable).set({ premiumTier: newTier, premiumExpiresAt: expiresAt }).where(eq(usersTable.id, userId));
-  await db.update(premiumCodesTable)
+
+  // Atomically increment usesCount only if still below maxUses — prevents race
+  // conditions where two concurrent requests both pass the check above.
+  const [updatedCode] = await db.update(premiumCodesTable)
     .set({
       usesCount: sql`${premiumCodesTable.usesCount} + 1`,
-      isActive: newUsesCount >= premCode.maxUses ? false : premCode.isActive,
+      isActive: sql`CASE WHEN ${premiumCodesTable.usesCount} + 1 >= ${premCode.maxUses} THEN false ELSE ${premiumCodesTable.isActive} END`,
     })
-    .where(eq(premiumCodesTable.id, premCode.id));
+    .where(and(eq(premiumCodesTable.id, premCode.id), sql`${premiumCodesTable.usesCount} < ${premCode.maxUses}`))
+    .returning({ id: premiumCodesTable.id });
+
+  if (!updatedCode) {
+    res.status(400).json({ error: "This code has already been fully redeemed" });
+    return;
+  }
+
+  await db.update(usersTable).set({ premiumTier: newTier, premiumExpiresAt: expiresAt }).where(eq(usersTable.id, userId));
 
   res.json({ message: `${newTier === "pro" ? "Pro" : "Premium"} activated for ${premCode.days} days!`, tier: newTier, expiresAt });
 });
