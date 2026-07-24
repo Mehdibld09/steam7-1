@@ -71,8 +71,7 @@ router.get("/", async (req, res) => {
   }
 
   const conditions = [eq(accountsTable.isAvailable, true), isNull(accountsTable.deletedAt)];
-  // Non-VIP users cannot see VIP-only listings
-  if (!requestingUserIsVip) conditions.push(eq(accountsTable.vipOnly, false));
+  // VIP-only listings are visible to all users; claiming is gated on the frontend.
   if (game) conditions.push(sql`${game} = ANY(${accountsTable.games})`);
   if (search) {
     const like = `%${search.toLowerCase()}%`;
@@ -296,21 +295,7 @@ router.get("/:accountId", async (req, res) => {
     return;
   }
 
-  // VIP-only accounts are hidden from non-VIP users.
-  // Admins and the account owner can always view their own listings.
-  const isOwner = userId && account.userId === userId;
-  const isAdmin = req.session?.isAdmin;
-  if (account.vipOnly && !isOwner && !isAdmin) {
-    if (userId) {
-      const [reqUser] = await db.select({ premiumTier: usersTable.premiumTier, premiumExpiresAt: usersTable.premiumExpiresAt })
-        .from(usersTable).where(eq(usersTable.id, userId)).limit(1);
-      const isVip = reqUser && reqUser.premiumTier === "pro" && (!reqUser.premiumExpiresAt || new Date(reqUser.premiumExpiresAt) > new Date());
-      if (!isVip) { res.status(403).json({ error: "This listing is only available to VIP members." }); return; }
-    } else {
-      res.status(403).json({ error: "This listing is only available to VIP members." });
-      return;
-    }
-  }
+  // VIP-only listings are visible to everyone; credential claiming is gated on the frontend.
 
   // Increment view count once per session (fire-and-forget)
   const viewedKey = `viewed_${accountId}`;

@@ -461,10 +461,21 @@ export default function AccountDetail() {
                     {(() => {
                       const method = (account as any).unlockMethod ?? "login";
                       const isOwner = user?.id === account.userId;
+                      const isAdmin = (user as any)?.isAdmin;
                       const isProActive =
                         (user as any)?.premiumTier === "pro" &&
                         (user as any)?.premiumExpiresAt &&
                         new Date((user as any).premiumExpiresAt) > new Date();
+                      // VIP-only gate — shown to non-VIP, non-owner, non-admin users
+                      const vipBlocked = (account as any).vipOnly && !isOwner && !isAdmin && !isProActive;
+                      if (vipBlocked) {
+                        return (
+                          <Button disabled variant="outline" className="gap-2 font-bold w-full text-xs sm:text-sm border-yellow-500/40 text-yellow-400">
+                            <Lock className="h-4 w-4" />
+                            VIP Only
+                          </Button>
+                        );
+                      }
                       const gateBlocked = !isOwner && user && !isProActive && (
                         (method === "like" && !account.userHasLiked) ||
                         (method === "comment" && !(account as any).userHasCommented)
@@ -495,10 +506,21 @@ export default function AccountDetail() {
                 {/* Unlock gate hints */}
                 {(() => {
                   const method = (account as any).unlockMethod ?? "login";
+                  const isOwner = user?.id === account.userId;
+                  const isAdmin = (user as any)?.isAdmin;
                   const isProActive =
                     (user as any)?.premiumTier === "pro" &&
                     (user as any)?.premiumExpiresAt &&
                     new Date((user as any).premiumExpiresAt) > new Date();
+                  // VIP hint — takes priority over other gate hints
+                  if ((account as any).vipOnly && !isOwner && !isAdmin && !isProActive) {
+                    return (
+                      <div className="mt-3 p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20 text-xs sm:text-sm text-center space-y-1">
+                        <p className="font-medium text-yellow-400">VIP membership required</p>
+                        <p className="text-xs text-muted-foreground">This listing is exclusive to active VIP subscribers.</p>
+                      </div>
+                    );
+                  }
                   if (isProActive) return null;
                   if (method === "like" && !account.userHasLiked && user && user.id !== account.userId) {
                     return (
