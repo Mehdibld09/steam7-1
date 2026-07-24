@@ -292,3 +292,10 @@
   background-size: 300%;
   animation: gold-shift 3s linear infinite;
 }
+.avatar-glow {
+  box-shadow: 0 0 0 2px rgba(0, 184, 148, 0.2), 0 0 14px rgba(0, 184, 148, 0.5);
+  transition: box-shadow 0.2s ease;
+}
+.avatar-glow:hover {
+  box-shadow: 0 0 0 2px rgba(0, 184, 148, 0.4), 0 0 20px rgba(0, 184, 148, 0.7);
+}

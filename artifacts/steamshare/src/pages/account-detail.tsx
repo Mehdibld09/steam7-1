@@ -604,7 +604,7 @@ export default function AccountDetail() {
           {/* Poster info bar — forum style */}
           <div className="flex border-t border-border px-4 sm:px-6 py-3 items-center gap-3">
             <Link href={`/profile/${account.userId}`}>
-              <Avatar className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 shadow-[0_0_0_2px_rgba(0,184,148,0.25),0_0_12px_rgba(0,184,148,0.45)] hover:shadow-[0_0_0_2px_rgba(0,184,148,0.4),0_0_18px_rgba(0,184,148,0.65)] transition-all duration-200">
+              <Avatar className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 avatar-glow">
                 <AvatarImage src={poster?.avatarUrl || "/default-avatar.png"} />
                 <AvatarFallback className="text-xs">
                   {(
@@ -1575,7 +1575,7 @@ export default function AccountDetail() {
                 href={`/profile/${account.userId}`}
                 className="flex items-center gap-3 group"
               >
-                <Avatar className="h-10 w-10 sm:h-12 sm:w-12 shadow-[0_0_0_2px_rgba(0,184,148,0.25),0_0_14px_rgba(0,184,148,0.45)] group-hover:shadow-[0_0_0_2px_rgba(0,184,148,0.4),0_0_20px_rgba(0,184,148,0.65)] transition-all duration-200">
+                <Avatar className="h-10 w-10 sm:h-12 sm:w-12 avatar-glow">
                   <AvatarImage
                     src={poster?.avatarUrl || "/default-avatar.png"}
                   />
