@@ -60,7 +60,19 @@ router.get("/", async (req, res) => {
   const sort = (req.query.sort as string) ?? "recent";
   const userId = req.session?.userId;
 
+  // Check if requesting user is VIP (pro)
+  let requestingUserIsVip = false;
+  if (userId) {
+    const [reqUser] = await db.select({ premiumTier: usersTable.premiumTier, premiumExpiresAt: usersTable.premiumExpiresAt })
+      .from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+    if (reqUser) {
+      requestingUserIsVip = reqUser.premiumTier === "pro" && (!reqUser.premiumExpiresAt || new Date(reqUser.premiumExpiresAt) > new Date());
+    }
+  }
+
   const conditions = [eq(accountsTable.isAvailable, true), isNull(accountsTable.deletedAt)];
+  // Non-VIP users cannot see VIP-only listings
+  if (!requestingUserIsVip) conditions.push(eq(accountsTable.vipOnly, false));
   if (game) conditions.push(sql`${game} = ANY(${accountsTable.games})`);
   if (search) {
     const like = `%${search.toLowerCase()}%`;
@@ -97,6 +109,7 @@ router.get("/", async (req, res) => {
         posterNameColor: usersTable.nameColor,
         posterBadgeType: usersTable.badgeType,
         isPinned: accountsTable.isPinned,
+        vipOnly: accountsTable.vipOnly,
       })
       .from(accountsTable)
       .leftJoin(usersTable, eq(accountsTable.userId, usersTable.id))
@@ -131,7 +144,7 @@ router.get("/", async (req, res) => {
 
   const now = new Date();
   const result = accounts.map((a) => {
-    const isPremiumActive = a.posterPremiumTier && a.posterPremiumExpiresAt && new Date(a.posterPremiumExpiresAt as any) > now;
+    const isPremiumActive = a.posterPremiumTier && (!a.posterPremiumExpiresAt || new Date(a.posterPremiumExpiresAt as any) > now);
     return {
       ...a,
       username: a.posterUsername ?? "",
@@ -198,9 +211,11 @@ router.post("/", requireAuth, async (req, res) => {
   const customButtonLabel = customButtonEnabled ? String((req.body as any).customButtonLabel ?? "").trim() || null : null;
   const customButtonUrl = customButtonEnabled ? String((req.body as any).customButtonUrl ?? "").trim() || null : null;
 
+  const vipOnly = !!(req.body as any).vipOnly;
+
   const [account] = await db
     .insert(accountsTable)
-    .values({ userId, title: filteredTitle, description: filteredDescription, games, pointsCost, steamUsername, steamPassword, unlockMethod: safeUnlockMethod, status, isAvailable, customButtonEnabled, customButtonLabel, customButtonUrl })
+    .values({ userId, title: filteredTitle, description: filteredDescription, games, pointsCost, steamUsername, steamPassword, unlockMethod: safeUnlockMethod, status, isAvailable, customButtonEnabled, customButtonLabel, customButtonUrl, vipOnly })
     .returning();
 
   // Only award XP and points immediately for instantly published accounts
@@ -268,6 +283,7 @@ router.get("/:accountId", async (req, res) => {
       customButtonEnabled: accountsTable.customButtonEnabled,
       customButtonLabel: accountsTable.customButtonLabel,
       customButtonUrl: accountsTable.customButtonUrl,
+      vipOnly: accountsTable.vipOnly,
     })
     .from(accountsTable)
     .leftJoin(usersTable, eq(accountsTable.userId, usersTable.id))
@@ -276,6 +292,17 @@ router.get("/:accountId", async (req, res) => {
 
   if (!account) {
     res.status(404).json({ error: "Account not found" });
+    return;
+  }
+
+  // VIP-only accounts are hidden from non-VIP users
+  if (account.vipOnly && userId) {
+    const [reqUser] = await db.select({ premiumTier: usersTable.premiumTier, premiumExpiresAt: usersTable.premiumExpiresAt })
+      .from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+    const isVip = reqUser && reqUser.premiumTier === "pro" && (!reqUser.premiumExpiresAt || new Date(reqUser.premiumExpiresAt) > new Date());
+    if (!isVip) { res.status(403).json({ error: "This listing is only available to VIP members." }); return; }
+  } else if (account.vipOnly && !userId) {
+    res.status(403).json({ error: "This listing is only available to VIP members." });
     return;
   }
 

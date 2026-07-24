@@ -320,9 +320,11 @@ export default function AccountDetail() {
 
             {/* Inline meta row — badge + views + comments + status */}
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap text-xs sm:text-sm text-muted-foreground">
-              {account.pointsCost === 0
-                ? <Badge className="bg-green-600/20 text-green-600 border-green-600/30 text-[10px] sm:text-xs">Free</Badge>
-                : <Badge variant="outline" className="border-primary/50 text-primary bg-primary/10 flex items-center gap-1 text-[10px] sm:text-xs"><Coins className="h-2.5 w-2.5" />{account.pointsCost} pts</Badge>
+              {(account as any).vipOnly
+                ? <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[10px] sm:text-xs font-bold">VIP</Badge>
+                : account.pointsCost === 0
+                  ? <Badge className="bg-green-600/20 text-green-600 border-green-600/30 text-[10px] sm:text-xs">Free</Badge>
+                  : <Badge variant="outline" className="border-primary/50 text-primary bg-primary/10 flex items-center gap-1 text-[10px] sm:text-xs"><Coins className="h-2.5 w-2.5" />{account.pointsCost} pts</Badge>
               }
               <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium border ${account.isAvailable ? "bg-green-500/10 text-green-600 border-green-500/30" : "bg-muted/40 text-muted-foreground border-border"}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${account.isAvailable ? "bg-green-500" : "bg-muted-foreground"}`} />
@@ -834,7 +836,29 @@ export default function AccountDetail() {
                   <AvatarFallback className="text-xs">{(account.posterUsername?.substring(0, 2) ?? "").toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-bold text-sm sm:text-base group-hover:text-primary transition-colors">{account.posterUsername}</p>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {(account as any).posterNameColor === "rainbow" ? (
+                      <span className="rainbow-text font-bold text-sm sm:text-base">{account.posterUsername}</span>
+                    ) : (account as any).posterNameColor === "fire" ? (
+                      <span className="fire-text font-bold text-sm sm:text-base">{account.posterUsername}</span>
+                    ) : (account as any).posterNameColor === "ocean" ? (
+                      <span className="ocean-text font-bold text-sm sm:text-base">{account.posterUsername}</span>
+                    ) : (account as any).posterNameColor === "galaxy" ? (
+                      <span className="galaxy-text font-bold text-sm sm:text-base">{account.posterUsername}</span>
+                    ) : (account as any).posterNameColor === "neon" ? (
+                      <span className="neon-text font-bold text-sm sm:text-base">{account.posterUsername}</span>
+                    ) : (account as any).posterNameColor === "gold" ? (
+                      <span className="gold-text font-bold text-sm sm:text-base">{account.posterUsername}</span>
+                    ) : (
+                      <span
+                        className="font-bold text-sm sm:text-base group-hover:text-primary transition-colors"
+                        style={(account as any).posterNameColor ? { color: (account as any).posterNameColor } : undefined}
+                      >
+                        {account.posterUsername}
+                      </span>
+                    )}
+                    <UserBadge badgeType={(account as any).posterBadgeType} size={14} />
+                  </div>
                   {poster?.badgeName && (
                     <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary mt-0.5">{poster.badgeName}</Badge>
                   )}

@@ -195,6 +195,27 @@ export function registrationCodeEmailHtml(code: string, username: string, verify
   `);
 }
 
+// ─── Password reset OTP (no links — avoids spam filters) ─────────────────────
+export function passwordResetOtpEmailHtml(code: string, username: string): string {
+  return emailBase(`
+    <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">Reset your password</h1>
+    <p style="margin:0 0 28px;color:#a1a1aa;font-size:15px;line-height:1.6;">
+      Hi <strong style="color:#ffffff;">${escapeHtml(username)}</strong> — enter the code below on the site to choose a new password. It expires in <strong style="color:#ffffff;">1 hour</strong>.
+    </p>
+
+    <div style="background:#09090b;border:1px solid #14b8a6;border-radius:12px;padding:28px;text-align:center;margin-bottom:28px;">
+      <p style="margin:0 0 10px;color:#71717a;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Password reset code</p>
+      <span style="font-size:44px;font-weight:900;letter-spacing:12px;color:#2dd4bf;font-family:monospace;">${escapeHtml(code)}</span>
+    </div>
+
+    <div style="border-top:1px solid #27272a;padding-top:20px;">
+      <p style="margin:0;color:#52525b;font-size:13px;line-height:1.6;">
+        If you did not request a password reset, you can safely ignore this message — your account is unchanged.
+      </p>
+    </div>
+  `);
+}
+
 // ─── Password change code ─────────────────────────────────────────────────────
 export function passwordChangeEmailHtml(code: string, username: string): string {
   return emailBase(`

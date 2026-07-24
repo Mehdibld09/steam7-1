@@ -32,6 +32,7 @@ export const accountsTable = pgTable("accounts", {
   customButtonEnabled: boolean("custom_button_enabled").notNull().default(false),
   customButtonLabel: text("custom_button_label"),
   customButtonUrl: text("custom_button_url"),
+  vipOnly: boolean("vip_only").notNull().default(false),
 }, (t) => [
   // Main listing: WHERE isAvailable = true AND deletedAt IS NULL, ORDER BY createdAt DESC
   index("accounts_available_created_idx").on(t.isAvailable, t.createdAt),

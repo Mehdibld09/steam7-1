@@ -61,7 +61,9 @@ export function AccountCard({ account, isAdmin, onPin, onUnpin }: AccountCardPro
             <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50">
               {/* Cost */}
               <div className="shrink-0">
-                {account.pointsCost === 0 ? (
+                {(account as any).vipOnly ? (
+                  <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs px-2 font-bold">VIP</Badge>
+                ) : account.pointsCost === 0 ? (
                   <Badge className="bg-green-600/20 text-green-400 border-green-600/30 text-xs px-2">Free</Badge>
                 ) : (
                   <div className="flex items-center gap-1 text-primary font-bold text-xs">

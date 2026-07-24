@@ -164,6 +164,7 @@ export default function Submit() {
           steamPassword: values.steamPassword,
           unlockMethod: values.unlockMethod,
           isFamilyShare,
+          vipOnly: (values as any).vipOnly ?? false,
           ...(user?.isAdmin && values.customButtonEnabled ? {
             customButtonEnabled: true,
             customButtonLabel: values.customButtonLabel || "",
@@ -335,6 +336,21 @@ export default function Submit() {
                     <FormMessage />
                   </FormItem>
                 )} />
+
+                {/* VIP-only visibility */}
+                <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      id="vipOnly"
+                      checked={form.watch("vipOnly" as any) ?? false}
+                      onCheckedChange={(v) => (form as any).setValue("vipOnly", !!v)}
+                    />
+                    <label htmlFor="vipOnly" className="cursor-pointer select-none">
+                      <span className="font-semibold text-yellow-400 text-sm">VIP Only</span>
+                      <p className="text-xs text-muted-foreground mt-0.5">Only users with an active VIP subscription can see and claim this account.</p>
+                    </label>
+                  </div>
+                </div>
 
                 {/* Steam Credentials + Verify */}
                 <div className="bg-muted/30 border border-border rounded-xl p-5 space-y-4">

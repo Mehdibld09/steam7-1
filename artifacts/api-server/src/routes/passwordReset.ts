@@ -3,7 +3,8 @@ import express from "express";
 import { db, usersTable, passwordResetTokensTable } from "@workspace/db";
 import { eq, and, gt } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { randomBytes } from "crypto";
+import crypto from "crypto";
+import { sendEmail, passwordResetOtpEmailHtml } from "../lib/email";
 
 const router = express.Router();
 
@@ -15,35 +16,41 @@ router.post("/forgot-password", async (req, res) => {
   }
 
   const [user] = await db
-    .select({ id: usersTable.id, username: usersTable.username })
+    .select({ id: usersTable.id, username: usersTable.username, email: usersTable.email })
     .from(usersTable)
     .where(eq(usersTable.email, email))
     .limit(1);
 
   if (!user) {
-    res.json({ message: "If an account with that email exists, a reset token has been generated." });
+    // Don't reveal whether email exists
+    res.json({ message: "If an account with that email exists, a reset code has been sent." });
     return;
   }
 
-  const token = randomBytes(32).toString("hex");
+  // Generate a 6-digit OTP code
+  const code = String(crypto.randomInt(100000, 1000000));
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
   await db.insert(passwordResetTokensTable).values({
     userId: user.id,
-    token,
+    token: code,
     expiresAt,
   });
 
-  res.json({
-    message: "If an account with that email exists, a reset link has been sent. Contact an admin if you need assistance.",
-  });
+  try {
+    await sendEmail(user.email, "Your Steam Family password reset code", passwordResetOtpEmailHtml(code, user.username));
+  } catch {
+    // Don't reveal email errors to the client
+  }
+
+  res.json({ message: "If an account with that email exists, a reset code has been sent." });
 });
 
 router.post("/reset-password", async (req, res) => {
   const { token, newPassword } = req.body;
 
   if (!token || !newPassword || newPassword.length < 6) {
-    res.status(400).json({ error: "Token and new password (min 6 chars) are required" });
+    res.status(400).json({ error: "Code and new password (min 6 chars) are required" });
     return;
   }
 
@@ -52,14 +59,14 @@ router.post("/reset-password", async (req, res) => {
     .from(passwordResetTokensTable)
     .where(
       and(
-        eq(passwordResetTokensTable.token, token),
+        eq(passwordResetTokensTable.token, String(token)),
         gt(passwordResetTokensTable.expiresAt, new Date()),
       ),
     )
     .limit(1);
 
   if (!resetToken || resetToken.usedAt) {
-    res.status(400).json({ error: "Invalid or expired reset token" });
+    res.status(400).json({ error: "Invalid or expired reset code" });
     return;
   }
 

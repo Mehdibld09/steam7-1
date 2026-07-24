@@ -324,7 +324,7 @@ export default function Messages() {
     setSelectedAvatarUrl(conv.partner_avatar_url ?? null);
     setSelectedIsAdmin(!!conv.partner_is_admin);
     setSelectedIsMod(!!conv.partner_is_moderator);
-    const premiumActive = conv.partner_premium_tier && conv.partner_premium_expires_at && new Date(conv.partner_premium_expires_at) > new Date();
+    const premiumActive = conv.partner_premium_tier && (!conv.partner_premium_expires_at || new Date(conv.partner_premium_expires_at) > new Date());
     setSelectedNameColor(premiumActive ? (conv.partner_name_color ?? null) : null);
     setSelectedBadgeType(premiumActive ? (conv.partner_badge_type ?? null) : null);
     setMobileView("chat");
@@ -386,13 +386,13 @@ export default function Messages() {
                       <div className="flex items-center justify-between gap-1">
                         <div className="flex items-center gap-1.5 min-w-0">
                           {(() => {
-                            const premiumActive = conv.partner_premium_tier && conv.partner_premium_expires_at && new Date(conv.partner_premium_expires_at) > new Date();
+                            const premiumActive = conv.partner_premium_tier && (!conv.partner_premium_expires_at || new Date(conv.partner_premium_expires_at) > new Date());
                             const nc = premiumActive ? conv.partner_name_color : null;
                             const cls = nc === "rainbow" ? "rainbow-text" : nc === "fire" ? "fire-text" : nc === "ocean" ? "ocean-text" : nc === "galaxy" ? "galaxy-text" : nc === "neon" ? "neon-text" : nc === "gold" ? "gold-text" : null;
                             return <span className={`font-semibold text-sm truncate${cls ? ` ${cls}` : ""}`} style={!cls && nc ? { color: nc } : undefined}>{conv.partner_username}</span>;
                           })()}
                           {(() => {
-                            const premiumActive = conv.partner_premium_tier && conv.partner_premium_expires_at && new Date(conv.partner_premium_expires_at) > new Date();
+                            const premiumActive = conv.partner_premium_tier && (!conv.partner_premium_expires_at || new Date(conv.partner_premium_expires_at) > new Date());
                             return premiumActive ? <UserBadge badgeType={conv.partner_badge_type} size={13} /> : null;
                           })()}
                           <RoleBadge isAdmin={conv.partner_is_admin} isModerator={conv.partner_is_moderator} />
