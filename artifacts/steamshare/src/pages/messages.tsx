@@ -1,11 +1,25 @@
 import { Layout } from "@/components/layout";
-import { useGetMe } from "@workspace/api-client-react";
+import {
+  useGetMe,
+  useGetUser,
+  getGetUserQueryKey,
+} from "@workspace/api-client-react";
 import { useState, useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, MessageSquare, ArrowLeft, Bot, MoreVertical, Trash2, Flag, Ban, X } from "lucide-react";
+import {
+  Send,
+  MessageSquare,
+  ArrowLeft,
+  Bot,
+  MoreVertical,
+  Trash2,
+  Flag,
+  Ban,
+  X,
+} from "lucide-react";
 import { UserBadge } from "@/components/user-badge";
 import { Link, useLocation } from "wouter";
 import { formatDistanceToNow } from "date-fns";
@@ -13,7 +27,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 function sanitizeHref(url: string): string {
   const trimmed = url.trim().toLowerCase();
-  if (trimmed.startsWith("javascript:") || trimmed.startsWith("vbscript:") || trimmed.startsWith("data:")) {
+  if (
+    trimmed.startsWith("javascript:") ||
+    trimmed.startsWith("vbscript:") ||
+    trimmed.startsWith("data:")
+  ) {
     return "#";
   }
   return url;
@@ -21,12 +39,21 @@ function sanitizeHref(url: string): string {
 
 function renderBotMarkdown(text: string): string {
   return text
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/__(.+?)__/g, "<u>$1</u>")
     .replace(/_(.+?)_/g, "<em>$1</em>")
-    .replace(/`(.+?)`/g, '<code class="bg-black/20 rounded px-0.5 font-mono text-xs">$1</code>')
-    .replace(/\[(.+?)\]\((.+?)\)/g, (_m, label, href) => `<a href="${sanitizeHref(href)}" target="_blank" rel="noopener noreferrer" class="underline">${label}</a>`)
+    .replace(
+      /`(.+?)`/g,
+      '<code class="bg-black/20 rounded px-0.5 font-mono text-xs">$1</code>',
+    )
+    .replace(
+      /\[(.+?)\]\((.+?)\)/g,
+      (_m, label, href) =>
+        `<a href="${sanitizeHref(href)}" target="_blank" rel="noopener noreferrer" class="underline">${label}</a>`,
+    )
     .replace(/\n/g, "<br/>");
 }
 
@@ -56,18 +83,25 @@ interface Message {
 }
 
 async function fetchConversations(): Promise<Conversation[]> {
-  const res = await fetch("/api/messages/conversations", { credentials: "include" });
+  const res = await fetch("/api/messages/conversations", {
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("Failed to load conversations");
   return res.json();
 }
 
 async function fetchMessages(userId: number): Promise<Message[]> {
-  const res = await fetch(`/api/messages/${userId}`, { credentials: "include" });
+  const res = await fetch(`/api/messages/${userId}`, {
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("Failed to load messages");
   return res.json();
 }
 
-async function sendMessage(receiverId: number, content: string): Promise<Message> {
+async function sendMessage(
+  receiverId: number,
+  content: string,
+): Promise<Message> {
   const res = await fetch("/api/messages", {
     method: "POST",
     credentials: "include",
@@ -89,7 +123,11 @@ async function deleteMessage(messageId: number): Promise<void> {
   if (!res.ok) throw new Error("Failed to delete message");
 }
 
-async function reportUser(targetId: number, reason: string, details: string): Promise<void> {
+async function reportUser(
+  targetId: number,
+  reason: string,
+  details: string,
+): Promise<void> {
   const res = await fetch("/api/reports", {
     method: "POST",
     credentials: "include",
@@ -99,7 +137,13 @@ async function reportUser(targetId: number, reason: string, details: string): Pr
   if (!res.ok) throw new Error("Failed to submit report");
 }
 
-function RoleBadge({ isAdmin, isModerator }: { isAdmin?: boolean; isModerator?: boolean }) {
+function RoleBadge({
+  isAdmin,
+  isModerator,
+}: {
+  isAdmin?: boolean;
+  isModerator?: boolean;
+}) {
   if (isAdmin) {
     return (
       <span className="bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">
@@ -131,8 +175,14 @@ function ReportModal({ targetId, targetUsername, onClose }: ReportModalProps) {
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit() {
-    if (!reason.trim()) { setError("Please describe the reason."); return; }
-    if (!proof.trim()) { setError("Please provide proof or details."); return; }
+    if (!reason.trim()) {
+      setError("Please describe the reason.");
+      return;
+    }
+    if (!proof.trim()) {
+      setError("Please provide proof or details.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -151,9 +201,14 @@ function ReportModal({ targetId, targetUsername, onClose }: ReportModalProps) {
         <div className="flex items-center justify-between p-5 border-b border-border">
           <div className="flex items-center gap-2">
             <Flag className="h-4 w-4 text-red-400" />
-            <h3 className="font-bold text-foreground">Report {targetUsername}</h3>
+            <h3 className="font-bold text-foreground">
+              Report {targetUsername}
+            </h3>
           </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -164,13 +219,19 @@ function ReportModal({ targetId, targetUsername, onClose }: ReportModalProps) {
               <Flag className="h-5 w-5 text-green-400" />
             </div>
             <p className="font-semibold text-foreground">Report submitted</p>
-            <p className="text-sm text-muted-foreground mt-1">Our team will review it shortly.</p>
-            <Button className="mt-5 w-full" variant="outline" onClick={onClose}>Close</Button>
+            <p className="text-sm text-muted-foreground mt-1">
+              Our team will review it shortly.
+            </p>
+            <Button className="mt-5 w-full" variant="outline" onClick={onClose}>
+              Close
+            </Button>
           </div>
         ) : (
           <div className="p-5 space-y-4">
             <div>
-              <label className="text-sm font-semibold text-foreground block mb-1.5">Reason</label>
+              <label className="text-sm font-semibold text-foreground block mb-1.5">
+                Reason
+              </label>
               <Input
                 placeholder="e.g. Spam, harassment, scam..."
                 value={reason}
@@ -189,12 +250,20 @@ function ReportModal({ targetId, targetUsername, onClose }: ReportModalProps) {
                 rows={4}
                 className="bg-secondary/40 border-border rounded-xl resize-none"
               />
-              <p className="text-xs text-muted-foreground mt-1">Proof is required to process your report.</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Proof is required to process your report.
+              </p>
             </div>
             {error && <p className="text-sm text-red-400">{error}</p>}
             <div className="flex gap-2 pt-1">
-              <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
-              <Button onClick={handleSubmit} disabled={loading} className="flex-1 bg-red-500 hover:bg-red-600 text-white">
+              <Button variant="outline" onClick={onClose} className="flex-1">
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+              >
                 {loading ? "Submitting…" : "Submit Report"}
               </Button>
             </div>
@@ -206,7 +275,13 @@ function ReportModal({ targetId, targetUsername, onClose }: ReportModalProps) {
 }
 
 // Header 3-dot menu: Block + Report only (no delete)
-function HeaderMenu({ targetId, targetUsername }: { targetId: number; targetUsername: string }) {
+function HeaderMenu({
+  targetId,
+  targetUsername,
+}: {
+  targetId: number;
+  targetUsername: string;
+}) {
   const [open, setOpen] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [blockDone, setBlockDone] = useState(false);
@@ -214,7 +289,8 @@ function HeaderMenu({ targetId, targetUsername }: { targetId: number; targetUser
 
   useEffect(() => {
     function handle(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
+      if (menuRef.current && !menuRef.current.contains(e.target as Node))
+        setOpen(false);
     }
     if (open) document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
@@ -238,7 +314,10 @@ function HeaderMenu({ targetId, targetUsername }: { targetId: number; targetUser
         {open && (
           <div className="absolute right-0 z-20 bg-popover border border-border rounded-xl shadow-xl py-1 w-36 text-sm top-full mt-1">
             <button
-              onClick={() => { setOpen(false); setShowReport(true); }}
+              onClick={() => {
+                setOpen(false);
+                setShowReport(true);
+              }}
               className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/50 text-foreground hover:text-primary transition-colors"
             >
               <Flag className="h-3.5 w-3.5" /> Report
@@ -269,11 +348,17 @@ export default function Messages() {
   const [location, navigate] = useLocation();
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedUsername, setSelectedUsername] = useState("");
-  const [selectedAvatarUrl, setSelectedAvatarUrl] = useState<string | null>(null);
+  const [selectedAvatarUrl, setSelectedAvatarUrl] = useState<string | null>(
+    null,
+  );
   const [selectedIsAdmin, setSelectedIsAdmin] = useState(false);
   const [selectedIsMod, setSelectedIsMod] = useState(false);
-  const [selectedNameColor, setSelectedNameColor] = useState<string | null>(null);
-  const [selectedBadgeType, setSelectedBadgeType] = useState<string | null>(null);
+  const [selectedNameColor, setSelectedNameColor] = useState<string | null>(
+    null,
+  );
+  const [selectedBadgeType, setSelectedBadgeType] = useState<string | null>(
+    null,
+  );
   const [draft, setDraft] = useState("");
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const queryClient = useQueryClient();
@@ -282,9 +367,9 @@ export default function Messages() {
     const params = new URLSearchParams(window.location.search);
     const userId = parseInt(params.get("user") || "0", 10);
     const username = params.get("username") || "";
-    if (userId && username) {
+    if (userId) {
       setSelectedUserId(userId);
-      setSelectedUsername(decodeURIComponent(username));
+      setSelectedUsername("");
       setSelectedNameColor(null);
       setSelectedBadgeType(null);
       setMobileView("chat");
@@ -296,20 +381,59 @@ export default function Messages() {
     queryFn: fetchConversations,
     refetchInterval: 20_000,
   });
+  const { data: selectedUser } = useGetUser(selectedUserId ?? 0, {
+    query: {
+      queryKey: getGetUserQueryKey(selectedUserId ?? 0),
+      enabled: !!selectedUserId,
+      retry: false,
+    },
+  });
 
   // When conversations load (or selectedUserId changes), sync premium data
   // for conversations opened via URL params (where selectUser() was never called).
   useEffect(() => {
     if (!selectedUserId || !conversations) return;
     const conv = conversations.find((c) => c.partner_id === selectedUserId);
-    if (!conv) return;
-    const premiumActive = conv.partner_premium_tier && (!conv.partner_premium_expires_at || new Date(conv.partner_premium_expires_at) > new Date());
-    setSelectedNameColor(premiumActive ? (conv.partner_name_color ?? null) : null);
-    setSelectedBadgeType(premiumActive ? (conv.partner_badge_type ?? null) : null);
-    setSelectedIsAdmin(!!conv.partner_is_admin);
-    setSelectedIsMod(!!conv.partner_is_moderator);
-    setSelectedAvatarUrl(conv.partner_avatar_url ?? null);
+    if (conv) {
+      const premiumActive =
+        conv.partner_premium_tier &&
+        (!conv.partner_premium_expires_at ||
+          new Date(conv.partner_premium_expires_at) > new Date());
+      setSelectedUsername(conv.partner_username);
+      setSelectedNameColor(
+        premiumActive ? (conv.partner_name_color ?? null) : null,
+      );
+      setSelectedBadgeType(
+        premiumActive ? (conv.partner_badge_type ?? null) : null,
+      );
+      setSelectedIsAdmin(!!conv.partner_is_admin);
+      setSelectedIsMod(!!conv.partner_is_moderator);
+      setSelectedAvatarUrl(conv.partner_avatar_url ?? null);
+    }
   }, [conversations, selectedUserId]);
+
+  useEffect(() => {
+    if (
+      !selectedUser ||
+      conversations?.some((c) => c.partner_id === selectedUser.id)
+    )
+      return;
+    const profile = selectedUser as any;
+    const premiumActive =
+      profile.premiumTier &&
+      (!profile.premiumExpiresAt ||
+        new Date(profile.premiumExpiresAt) > new Date());
+    setSelectedUsername(selectedUser.displayName || selectedUser.username);
+    setSelectedNameColor(
+      premiumActive ? (profile.nameColor ?? null) : null,
+    );
+    setSelectedBadgeType(
+      premiumActive ? (profile.badgeType ?? null) : null,
+    );
+    setSelectedIsAdmin(!!profile.isAdmin);
+    setSelectedIsMod(!!profile.isModerator);
+    setSelectedAvatarUrl(selectedUser.avatarUrl ?? null);
+  }, [selectedUser, conversations]);
 
   const { data: messages, refetch: refetchMessages } = useQuery({
     queryKey: ["messages", selectedUserId],
@@ -319,15 +443,19 @@ export default function Messages() {
   });
 
   const sendMutation = useMutation({
-    mutationFn: ({ receiverId, content }: { receiverId: number; content: string }) =>
-      sendMessage(receiverId, content),
+    mutationFn: ({
+      receiverId,
+      content,
+    }: {
+      receiverId: number;
+      content: string;
+    }) => sendMessage(receiverId, content),
     onSuccess: () => {
       setDraft("");
       queryClient.invalidateQueries({ queryKey: ["messages", selectedUserId] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
-
 
   const handleSend = () => {
     if (!draft.trim() || !selectedUserId) return;
@@ -340,20 +468,37 @@ export default function Messages() {
     setSelectedAvatarUrl(conv.partner_avatar_url ?? null);
     setSelectedIsAdmin(!!conv.partner_is_admin);
     setSelectedIsMod(!!conv.partner_is_moderator);
-    const premiumActive = conv.partner_premium_tier && (!conv.partner_premium_expires_at || new Date(conv.partner_premium_expires_at) > new Date());
-    setSelectedNameColor(premiumActive ? (conv.partner_name_color ?? null) : null);
-    setSelectedBadgeType(premiumActive ? (conv.partner_badge_type ?? null) : null);
+    const premiumActive =
+      conv.partner_premium_tier &&
+      (!conv.partner_premium_expires_at ||
+        new Date(conv.partner_premium_expires_at) > new Date());
+    setSelectedNameColor(
+      premiumActive ? (conv.partner_name_color ?? null) : null,
+    );
+    setSelectedBadgeType(
+      premiumActive ? (conv.partner_badge_type ?? null) : null,
+    );
     setMobileView("chat");
   };
 
   // Derive avatar when conversation is opened via URL param (no selectUser call)
-  const derivedAvatarUrl = selectedAvatarUrl ?? conversations?.find(c => c.partner_id === selectedUserId)?.partner_avatar_url ?? null;
+  const derivedAvatarUrl =
+    selectedAvatarUrl ??
+    conversations?.find((c) => c.partner_id === selectedUserId)
+      ?.partner_avatar_url ??
+    null;
 
   if (!me) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-20 text-center">
-          <p className="text-muted-foreground">Please <Link href="/login" className="text-primary hover:underline">log in</Link> to use messages.</p>
+          <p className="text-muted-foreground">
+            Please{" "}
+            <Link href="/login" className="text-primary hover:underline">
+              log in
+            </Link>{" "}
+            to use messages.
+          </p>
         </div>
       </Layout>
     );
@@ -365,10 +510,17 @@ export default function Messages() {
     <Layout noFooter>
       <div className="container mx-auto px-4 py-6 max-w-5xl">
         <button
-          onClick={() => { const prev = window.location.pathname; window.history.back(); setTimeout(() => { if (window.location.pathname === prev) navigate("/"); }, 80); }}
+          onClick={() => {
+            const prev = window.location.pathname;
+            window.history.back();
+            setTimeout(() => {
+              if (window.location.pathname === prev) navigate("/");
+            }, 80);
+          }}
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 group w-fit"
         >
-          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" /> Back
+          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />{" "}
+          Back
         </button>
         <h1 className="text-2xl font-black mb-6 flex items-center gap-2">
           <MessageSquare className="h-6 w-6 text-primary" /> Messages
@@ -376,16 +528,24 @@ export default function Messages() {
 
         <div className="bg-card border border-border rounded-xl overflow-hidden flex h-[600px]">
           {/* Sidebar */}
-          <div className={`w-full md:w-72 border-r border-border flex flex-col shrink-0 ${mobileView === "chat" ? "hidden md:flex" : "flex"}`}>
+          <div
+            className={`w-full md:w-72 border-r border-border flex flex-col shrink-0 ${mobileView === "chat" ? "hidden md:flex" : "flex"}`}
+          >
             <div className="p-3 border-b border-border">
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Conversations</p>
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+                Conversations
+              </p>
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               {!conversations || conversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center p-6">
                   <MessageSquare className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">No conversations yet.</p>
-                  <p className="text-xs text-muted-foreground/70 mt-1">Visit a user's profile to start a chat.</p>
+                  <p className="text-sm text-muted-foreground">
+                    No conversations yet.
+                  </p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">
+                    Visit a user's profile to start a chat.
+                  </p>
                 </div>
               ) : (
                 conversations.map((conv) => (
@@ -395,23 +555,67 @@ export default function Messages() {
                     className={`w-full flex items-center gap-3 p-3 hover:bg-muted/40 transition-colors text-left ${selectedUserId === conv.partner_id ? "bg-primary/10 border-r-2 border-primary" : ""}`}
                   >
                     <Avatar className="h-10 w-10 shrink-0">
-                      <AvatarImage src={conv.partner_avatar_url || "/default-avatar.png"} />
-                      <AvatarFallback>{(conv.partner_username?.substring(0, 2) ?? "").toUpperCase()}</AvatarFallback>
+                      <AvatarImage
+                        src={conv.partner_avatar_url || "/default-avatar.png"}
+                      />
+                      <AvatarFallback>
+                        {(
+                          conv.partner_username?.substring(0, 2) ?? ""
+                        ).toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
                         <div className="flex items-center gap-1.5 min-w-0">
                           {(() => {
-                            const premiumActive = conv.partner_premium_tier && (!conv.partner_premium_expires_at || new Date(conv.partner_premium_expires_at) > new Date());
-                            const nc = premiumActive ? conv.partner_name_color : null;
-                            const cls = nc === "rainbow" ? "rainbow-text" : nc === "fire" ? "fire-text" : nc === "ocean" ? "ocean-text" : nc === "galaxy" ? "galaxy-text" : nc === "neon" ? "neon-text" : nc === "gold" ? "gold-text" : null;
-                            return <span className={`font-semibold text-sm${cls ? ` ${cls}` : ""}`} style={!cls && nc ? { color: nc } : undefined}>{conv.partner_username}</span>;
+                            const premiumActive =
+                              conv.partner_premium_tier &&
+                              (!conv.partner_premium_expires_at ||
+                                new Date(conv.partner_premium_expires_at) >
+                                  new Date());
+                            const nc = premiumActive
+                              ? conv.partner_name_color
+                              : null;
+                            const cls =
+                              nc === "rainbow"
+                                ? "rainbow-text"
+                                : nc === "fire"
+                                  ? "fire-text"
+                                  : nc === "ocean"
+                                    ? "ocean-text"
+                                    : nc === "galaxy"
+                                      ? "galaxy-text"
+                                      : nc === "neon"
+                                        ? "neon-text"
+                                        : nc === "gold"
+                                          ? "gold-text"
+                                          : null;
+                            return (
+                              <span
+                                className={`font-semibold text-sm${cls ? ` ${cls}` : ""}`}
+                                style={!cls && nc ? { color: nc } : undefined}
+                              >
+                                {conv.partner_username}
+                              </span>
+                            );
                           })()}
                           {(() => {
-                            const premiumActive = conv.partner_premium_tier && (!conv.partner_premium_expires_at || new Date(conv.partner_premium_expires_at) > new Date());
-                            return premiumActive ? <UserBadge badgeType={conv.partner_badge_type} size={13} /> : null;
+                            const premiumActive =
+                              conv.partner_premium_tier &&
+                              (!conv.partner_premium_expires_at ||
+                                new Date(conv.partner_premium_expires_at) >
+                                  new Date());
+                            return premiumActive ? (
+                              <UserBadge
+                                badgeType={conv.partner_badge_type}
+                                size={13}
+                              />
+                            ) : null;
                           })()}
-                          <RoleBadge isAdmin={conv.partner_is_admin} isModerator={conv.partner_is_moderator} />
+                          <RoleBadge
+                            isAdmin={conv.partner_is_admin}
+                            isModerator={conv.partner_is_moderator}
+                          />
                         </div>
                         {Number(conv.unread_count) > 0 && (
                           <span className="bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1 shrink-0">
@@ -419,7 +623,9 @@ export default function Messages() {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">{conv.content}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {conv.content}
+                      </p>
                     </div>
                   </button>
                 ))
@@ -428,18 +634,27 @@ export default function Messages() {
           </div>
 
           {/* Chat area */}
-          <div className={`flex-1 flex flex-col ${mobileView === "list" ? "hidden md:flex" : "flex"}`}>
+          <div
+            className={`flex-1 flex flex-col ${mobileView === "list" ? "hidden md:flex" : "flex"}`}
+          >
             {!selectedUserId ? (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
                 <MessageSquare className="h-12 w-12 text-muted-foreground/20 mb-4" />
-                <p className="text-muted-foreground font-medium">Select a conversation</p>
-                <p className="text-sm text-muted-foreground/70 mt-1">Or visit a user's profile to start a new one.</p>
+                <p className="text-muted-foreground font-medium">
+                  Select a conversation
+                </p>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Or visit a user's profile to start a new one.
+                </p>
               </div>
             ) : (
               <>
                 {/* Chat header */}
                 <div className="p-3 border-b border-border flex items-center gap-3">
-                  <button className="md:hidden mr-1" onClick={() => setMobileView("list")}>
+                  <button
+                    className="md:hidden mr-1"
+                    onClick={() => setMobileView("list")}
+                  >
                     <ArrowLeft className="h-5 w-5" />
                   </button>
                   {isBot ? (
@@ -449,7 +664,11 @@ export default function Messages() {
                   ) : (
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={derivedAvatarUrl || undefined} />
-                      <AvatarFallback>{(selectedUsername?.substring(0, 2) ?? "").toUpperCase()}</AvatarFallback>
+                      <AvatarFallback>
+                        {(
+                          selectedUsername?.substring(0, 2) ?? ""
+                        ).toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
                   )}
                   <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -458,7 +677,20 @@ export default function Messages() {
                     ) : (
                       (() => {
                         const nc = selectedNameColor;
-                        const cls = nc === "rainbow" ? "rainbow-text" : nc === "fire" ? "fire-text" : nc === "ocean" ? "ocean-text" : nc === "galaxy" ? "galaxy-text" : nc === "neon" ? "neon-text" : nc === "gold" ? "gold-text" : null;
+                        const cls =
+                          nc === "rainbow"
+                            ? "rainbow-text"
+                            : nc === "fire"
+                              ? "fire-text"
+                              : nc === "ocean"
+                                ? "ocean-text"
+                                : nc === "galaxy"
+                                  ? "galaxy-text"
+                                  : nc === "neon"
+                                    ? "neon-text"
+                                    : nc === "gold"
+                                      ? "gold-text"
+                                      : null;
                         return (
                           <Link
                             href={`/profile/${selectedUserId}`}
@@ -470,15 +702,25 @@ export default function Messages() {
                         );
                       })()
                     )}
-                    {!isBot && selectedBadgeType && <UserBadge badgeType={selectedBadgeType} size={15} />}
+                    {!isBot && selectedBadgeType && (
+                      <UserBadge badgeType={selectedBadgeType} size={15} />
+                    )}
                     {isBot && (
                       <span className="bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">
                         System
                       </span>
                     )}
-                    {!isBot && <RoleBadge isAdmin={selectedIsAdmin} isModerator={selectedIsMod} />}
                     {!isBot && (
-                      <HeaderMenu targetId={selectedUserId!} targetUsername={selectedUsername} />
+                      <RoleBadge
+                        isAdmin={selectedIsAdmin}
+                        isModerator={selectedIsMod}
+                      />
+                    )}
+                    {!isBot && (
+                      <HeaderMenu
+                        targetId={selectedUserId!}
+                        targetUsername={selectedUsername}
+                      />
                     )}
                   </div>
                 </div>
@@ -489,7 +731,10 @@ export default function Messages() {
                     const isMe = msg.senderId === me.id;
                     const isBotMsg = !isMe && isBot;
                     return (
-                      <div key={msg.id} className={`flex group items-end gap-1 ${isMe ? "justify-end" : "justify-start"}`}>
+                      <div
+                        key={msg.id}
+                        className={`flex group items-end gap-1 ${isMe ? "justify-end" : "justify-start"}`}
+                      >
                         {isBotMsg && (
                           <div className="h-7 w-7 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mr-1 shrink-0">
                             <Bot className="h-3.5 w-3.5 text-primary" />
@@ -505,22 +750,33 @@ export default function Messages() {
                                 : "bg-muted text-foreground rounded-bl-sm"
                           }`}
                         >
-                          {isBotMsg || msg.content.includes('**') || msg.content.includes('\n') ? (
+                          {isBotMsg ||
+                          msg.content.includes("**") ||
+                          msg.content.includes("\n") ? (
                             <p
                               className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]"
-                              dangerouslySetInnerHTML={{ __html: renderBotMarkdown(msg.content) }}
+                              dangerouslySetInnerHTML={{
+                                __html: renderBotMarkdown(msg.content),
+                              }}
                             />
                           ) : (
-                            <p className="break-words [overflow-wrap:anywhere]">{msg.content}</p>
+                            <p className="break-words [overflow-wrap:anywhere]">
+                              {msg.content}
+                            </p>
                           )}
-                          <p className={`text-[10px] mt-0.5 ${isMe ? "text-white/70 text-right" : "text-muted-foreground"}`}>
+                          <p
+                            className={`text-[10px] mt-0.5 ${isMe ? "text-white/70 text-right" : "text-muted-foreground"}`}
+                          >
                             {formatDistanceToNow(new Date(msg.createdAt))} ago
                           </p>
                         </div>
 
                         {isMe && (
                           <button
-                            onClick={async () => { await deleteMessage(msg.id); refetchMessages(); }}
+                            onClick={async () => {
+                              await deleteMessage(msg.id);
+                              refetchMessages();
+                            }}
                             className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-muted/60 text-muted-foreground hover:text-red-400 shrink-0"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -534,7 +790,8 @@ export default function Messages() {
                 {isBot ? (
                   <div className="p-3 border-t border-border flex items-center justify-center gap-2 text-sm text-muted-foreground bg-muted/20">
                     <Bot className="h-4 w-4 text-primary/60" />
-                    This is an automated notification channel — replies are disabled
+                    This is an automated notification channel — replies are
+                    disabled
                   </div>
                 ) : (
                   <div className="p-3 border-t border-border flex gap-2">
@@ -542,10 +799,16 @@ export default function Messages() {
                       placeholder="Type a message..."
                       value={draft}
                       onChange={(e) => setDraft(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && !e.shiftKey && handleSend()
+                      }
                       className="flex-1"
                     />
-                    <Button size="icon" onClick={handleSend} disabled={!draft.trim() || sendMutation.isPending}>
+                    <Button
+                      size="icon"
+                      onClick={handleSend}
+                      disabled={!draft.trim() || sendMutation.isPending}
+                    >
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>

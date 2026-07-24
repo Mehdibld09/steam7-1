@@ -90,7 +90,7 @@ export function AccountCard({
 
               {/* User + stats */}
               <div className="flex items-center gap-2 min-w-0">
-                <Avatar className="h-5 w-5 border border-primary/70 shadow-[0_0_6px_hsl(var(--primary)/0.35)] shrink-0">
+                <Avatar className="h-5 w-5 border border-border shrink-0">
                   <AvatarImage
                     src={account.posterAvatarUrl || "/default-avatar.png"}
                   />

@@ -604,7 +604,7 @@ export default function AccountDetail() {
           {/* Poster info bar — forum style */}
           <div className="flex border-t border-border px-4 sm:px-6 py-3 items-center gap-3">
             <Link href={`/profile/${account.userId}`}>
-              <Avatar className="h-9 w-9 sm:h-10 sm:w-10 border border-primary/70 shadow-[0_0_8px_hsl(var(--primary)/0.4)] hover:border-primary transition-colors shrink-0">
+              <Avatar className="h-9 w-9 sm:h-10 sm:w-10 border border-border hover:border-primary transition-colors shrink-0">
                 <AvatarImage src={poster?.avatarUrl || "/default-avatar.png"} />
                 <AvatarFallback className="text-xs">
                   {(
@@ -672,7 +672,7 @@ export default function AccountDetail() {
             {/* Message button */}
             {user && user.id !== account.userId && (
               <Link
-                href={`/messages?user=${account.userId}&username=${encodeURIComponent(account.posterUsername ?? "")}`}
+                href={`/messages?user=${account.userId}`}
               >
                 <Button
                   variant="ghost"
@@ -1575,7 +1575,7 @@ export default function AccountDetail() {
                 href={`/profile/${account.userId}`}
                 className="flex items-center gap-3 group"
               >
-                <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border border-primary/70 shadow-[0_0_8px_hsl(var(--primary)/0.4)] group-hover:border-primary transition-colors">
+                <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border border-border group-hover:border-primary transition-colors">
                   <AvatarImage
                     src={poster?.avatarUrl || "/default-avatar.png"}
                   />
@@ -1663,7 +1663,7 @@ export default function AccountDetail() {
 
               {user && user.id !== account.userId && (
                 <Link
-                  href={`/messages?user=${account.userId}&username=${encodeURIComponent(account.posterUsername ?? "")}`}
+                  href={`/messages?user=${account.userId}`}
                 >
                   <Button
                     variant="outline"

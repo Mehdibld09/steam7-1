@@ -26,7 +26,7 @@ router.get("/conversations", requireAuth, async (req, res) => {
         m.created_at,
         m.is_read,
         m.sender_id,
-        u.username      AS partner_username,
+        COALESCE(u.display_name, u.username) AS partner_username,
         u.avatar_url    AS partner_avatar_url,
         u.is_admin      AS partner_is_admin,
         u.is_moderator  AS partner_is_moderator,
@@ -58,7 +58,9 @@ router.get("/unread/count", requireAuth, async (req, res) => {
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)` })
     .from(messagesTable)
-    .where(and(eq(messagesTable.receiverId, myId), eq(messagesTable.isRead, false)));
+    .where(
+      and(eq(messagesTable.receiverId, myId), eq(messagesTable.isRead, false)),
+    );
   res.json({ count: Number(count) });
 });
 
@@ -72,9 +74,15 @@ router.get("/:userId", requireAuth, async (req, res) => {
     .from(messagesTable)
     .where(
       or(
-        and(eq(messagesTable.senderId, myId), eq(messagesTable.receiverId, otherId)),
-        and(eq(messagesTable.senderId, otherId), eq(messagesTable.receiverId, myId)),
-      )
+        and(
+          eq(messagesTable.senderId, myId),
+          eq(messagesTable.receiverId, otherId),
+        ),
+        and(
+          eq(messagesTable.senderId, otherId),
+          eq(messagesTable.receiverId, myId),
+        ),
+      ),
     )
     .orderBy(desc(messagesTable.createdAt))
     .limit(100);
@@ -83,7 +91,12 @@ router.get("/:userId", requireAuth, async (req, res) => {
   await db
     .update(messagesTable)
     .set({ isRead: true })
-    .where(and(eq(messagesTable.senderId, otherId), eq(messagesTable.receiverId, myId)));
+    .where(
+      and(
+        eq(messagesTable.senderId, otherId),
+        eq(messagesTable.receiverId, myId),
+      ),
+    );
 
   // Return in ascending order (oldest first) — frontend uses flex-col-reverse
   // so oldest appears at top and newest at bottom, matching normal chat behaviour.
@@ -94,9 +107,19 @@ router.get("/:userId", requireAuth, async (req, res) => {
 router.delete("/:messageId", requireAuth, async (req, res) => {
   const myId = req.session.userId!;
   const messageId = parseInt(req.params.messageId, 10);
-  const [msg] = await db.select().from(messagesTable).where(eq(messagesTable.id, messageId)).limit(1);
-  if (!msg) { res.status(404).json({ error: "Message not found" }); return; }
-  if (msg.senderId !== myId) { res.status(403).json({ error: "Cannot delete another user's message" }); return; }
+  const [msg] = await db
+    .select()
+    .from(messagesTable)
+    .where(eq(messagesTable.id, messageId))
+    .limit(1);
+  if (!msg) {
+    res.status(404).json({ error: "Message not found" });
+    return;
+  }
+  if (msg.senderId !== myId) {
+    res.status(403).json({ error: "Cannot delete another user's message" });
+    return;
+  }
   await db.delete(messagesTable).where(eq(messagesTable.id, messageId));
   res.json({ ok: true });
 });
@@ -104,7 +127,10 @@ router.delete("/:messageId", requireAuth, async (req, res) => {
 // Send a message
 router.post("/", requireAuth, async (req, res) => {
   const senderId = req.session.userId!;
-  const { receiverId, content } = req.body as { receiverId: number; content: string };
+  const { receiverId, content } = req.body as {
+    receiverId: number;
+    content: string;
+  };
 
   if (!receiverId || !content?.trim()) {
     res.status(400).json({ error: "receiverId and content are required" });
@@ -115,7 +141,11 @@ router.post("/", requireAuth, async (req, res) => {
     return;
   }
 
-  const [target] = await db.select().from(usersTable).where(eq(usersTable.id, receiverId)).limit(1);
+  const [target] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, receiverId))
+    .limit(1);
   if (!target) {
     res.status(404).json({ error: "User not found" });
     return;
@@ -133,6 +163,5 @@ router.post("/", requireAuth, async (req, res) => {
 
   res.status(201).json(message);
 });
-
 
 export default router;
