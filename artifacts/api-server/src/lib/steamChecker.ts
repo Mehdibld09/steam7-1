@@ -294,8 +294,9 @@ async function isSteamFamilyShareAccount(
     }
     const data = await res.json() as Record<string, unknown>;
     const r = (data.response ?? {}) as Record<string, unknown>;
-    // If is_not_member_of_any_group is true, the account is not in any family group
-    if (r.is_not_member_of_any_group === true) return false;
+    // Steam's protobuf-over-HTTP responses may encode booleans as numbers (1/0),
+    // so use a truthy check rather than strict === true.
+    if (r.is_not_member_of_any_group) return false;
     // family_groupid is a string; "0" means no group
     const groupId = String(r.family_groupid ?? "0");
     const inFamily = groupId !== "0" && groupId !== "";
@@ -401,13 +402,20 @@ export async function checkSteamCredentials(username: string, password: string):
       const sessionid = [...Array(24)].map(() => Math.floor(Math.random() * 16).toString(16)).join("");
       await finalizeLogin(refreshToken, sessionid, proxies, auth.proxyIndex);
 
-      // Run games fetch and family-group check in parallel
-      const [games, isFamilyShare] = await Promise.all([
+      // Run games fetch and family-group check in parallel.
+      // Since Steam Families (2024) every family-group member — including the owner —
+      // has a non-zero family_groupid.  We only treat an account as "family share"
+      // (i.e. a borrower with no owned library) when BOTH conditions hold:
+      //   1. The Steam API says the account is in a family group, AND
+      //   2. The account owns 0 games (they rely entirely on shared games).
+      // Accounts with their own games are group owners/members, not borrowers.
+      const [games, inFamilyGroup] = await Promise.all([
         getOwnedGames(steamid64, accessToken || undefined, proxies, auth.proxyIndex),
         isSteamFamilyShareAccount(accessToken, proxies, auth.proxyIndex),
       ]);
+      const isFamilyShare = inFamilyGroup && games.length === 0;
 
-      logger.info({ steamid64, gameCount: games.length, isFamilyShare }, "Steam check complete");
+      logger.info({ steamid64, gameCount: games.length, inFamilyGroup, isFamilyShare }, "Steam check complete");
 
       return {
         status: "valid",
