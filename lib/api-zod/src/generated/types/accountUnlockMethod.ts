@@ -13,4 +13,5 @@ export const AccountUnlockMethod = {
   login: 'login',
   like: 'like',
   comment: 'comment',
+  vip: 'vip',
 } as const;

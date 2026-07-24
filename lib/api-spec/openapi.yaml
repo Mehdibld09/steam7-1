@@ -1295,7 +1295,7 @@ components:
           type: integer
         unlockMethod:
           type: string
-          enum: [login, like, comment]
+          enum: [login, like, comment, vip]
         userHasLiked:
           type: boolean
         userHasCommented:
@@ -1344,7 +1344,7 @@ components:
           type: string
         unlockMethod:
           type: string
-          enum: [login, like, comment]
+          enum: [login, like, comment, vip]
 
     ClaimResult:
       type: object

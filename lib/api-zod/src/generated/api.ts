@@ -251,7 +251,7 @@ export const ListAccountsResponse = zod.object({
   "viewCount": zod.number().optional(),
   "workingVotes": zod.number().optional(),
   "notWorkingVotes": zod.number().optional(),
-  "unlockMethod": zod.enum(['login', 'like', 'comment']).optional(),
+  "unlockMethod": zod.enum(['login', 'like', 'comment', 'vip']).optional(),
   "userHasLiked": zod.boolean().optional(),
   "userHasCommented": zod.boolean().optional(),
   "createdAt": zod.coerce.date()
@@ -282,7 +282,7 @@ export const CreateAccountBody = zod.object({
   "pointsCost": zod.number().min(createAccountBodyPointsCostMin),
   "steamUsername": zod.string(),
   "steamPassword": zod.string(),
-  "unlockMethod": zod.enum(['login', 'like', 'comment']).optional()
+  "unlockMethod": zod.enum(['login', 'like', 'comment', 'vip']).optional()
 })
 
 export const CreateAccountResponse = zod.object({
@@ -301,7 +301,7 @@ export const CreateAccountResponse = zod.object({
   "viewCount": zod.number().optional(),
   "workingVotes": zod.number().optional(),
   "notWorkingVotes": zod.number().optional(),
-  "unlockMethod": zod.enum(['login', 'like', 'comment']).optional(),
+  "unlockMethod": zod.enum(['login', 'like', 'comment', 'vip']).optional(),
   "userHasLiked": zod.boolean().optional(),
   "userHasCommented": zod.boolean().optional(),
   "createdAt": zod.coerce.date()
@@ -341,7 +341,7 @@ export const GetAccountResponse = zod.object({
   "viewCount": zod.number().optional(),
   "workingVotes": zod.number().optional(),
   "notWorkingVotes": zod.number().optional(),
-  "unlockMethod": zod.enum(['login', 'like', 'comment']).optional(),
+  "unlockMethod": zod.enum(['login', 'like', 'comment', 'vip']).optional(),
   "userHasLiked": zod.boolean().optional(),
   "userHasCommented": zod.boolean().optional(),
   "createdAt": zod.coerce.date()
@@ -555,7 +555,7 @@ export const GetUserAccountsResponseItem = zod.object({
   "viewCount": zod.number().optional(),
   "workingVotes": zod.number().optional(),
   "notWorkingVotes": zod.number().optional(),
-  "unlockMethod": zod.enum(['login', 'like', 'comment']).optional(),
+  "unlockMethod": zod.enum(['login', 'like', 'comment', 'vip']).optional(),
   "userHasLiked": zod.boolean().optional(),
   "userHasCommented": zod.boolean().optional(),
   "createdAt": zod.coerce.date()
