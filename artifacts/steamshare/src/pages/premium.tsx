@@ -232,7 +232,7 @@ export default function Premium() {
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Everything in Premium, plus</p>
               <ul className="space-y-2">
-                <FeatureItem icon={<Award className="h-4 w-4 text-blue-400" />} text="10 badges to choose from" />
+                <FeatureItem icon={<Award className="h-4 w-4 text-blue-400" />} text="8 badges to choose from + custom badge" />
                 <FeatureItem icon={<Sparkles className="h-4 w-4 text-purple-400" />} text="Animated name colors" />
                 <FeatureItem icon={<CircleDot className="h-4 w-4 text-blue-400" />} text="Profile border color" />
                 <FeatureItem icon={<ThumbsUp className="h-4 w-4 text-blue-400" />} text="Bypass like restrictions" />
