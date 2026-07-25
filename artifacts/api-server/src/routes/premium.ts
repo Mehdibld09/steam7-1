@@ -53,6 +53,8 @@ router.get("/status", requireAuth, async (req, res) => {
       premiumExpiresAt: usersTable.premiumExpiresAt,
       nameColor: usersTable.nameColor,
       badgeType: usersTable.badgeType,
+      badgeIconUrl: usersTable.badgeIconUrl,
+      badgeIconLink: usersTable.badgeIconLink,
     })
     .from(usersTable)
     .where(eq(usersTable.id, userId))
@@ -66,6 +68,8 @@ router.get("/status", requireAuth, async (req, res) => {
     expiresAt: active ? user.premiumExpiresAt : null,
     nameColor: active ? user.nameColor : null,
     badgeType: active ? user.badgeType : null,
+    badgeIconUrl: active ? user.badgeIconUrl : null,
+    badgeIconLink: active ? user.badgeIconLink : null,
     isActive: active,
   });
 });
@@ -122,10 +126,15 @@ router.post("/revoke", requireAdmin, async (req, res) => {
   res.json({ message: "Revoked premium" });
 });
 
-// PATCH /premium/preferences — update name color and badge for premium/pro users
+// PATCH /premium/preferences — update name color, badge, and custom badge icon for premium/pro users
 router.patch("/preferences", requireAuth, async (req, res) => {
   const userId = req.session.userId!;
-  const { nameColor, badgeType } = req.body as { nameColor?: string | null; badgeType?: string | null };
+  const { nameColor, badgeType, badgeIconUrl, badgeIconLink } = req.body as {
+    nameColor?: string | null;
+    badgeType?: string | null;
+    badgeIconUrl?: string | null;
+    badgeIconLink?: string | null;
+  };
 
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
@@ -145,7 +154,6 @@ router.patch("/preferences", requireAuth, async (req, res) => {
         res.status(400).json({ error: "Invalid color" });
         return;
       }
-      // Animated colors require any active premium (not just pro)
       updates.nameColor = nameColor;
     }
   }
@@ -163,6 +171,41 @@ router.patch("/preferences", requireAuth, async (req, res) => {
     } else {
       res.status(400).json({ error: "Invalid badge type" });
       return;
+    }
+  }
+
+  // Custom icon badge — Pro only
+  if (badgeIconUrl !== undefined) {
+    if (user.premiumTier !== "pro") {
+      res.status(403).json({ error: "Custom badge icon requires Pro subscription" });
+      return;
+    }
+    if (badgeIconUrl === null) {
+      updates.badgeIconUrl = null;
+      updates.badgeIconLink = null; // clear link too when icon is removed
+    } else {
+      // Basic URL validation
+      try { new URL(badgeIconUrl); } catch {
+        res.status(400).json({ error: "Invalid badge icon URL" });
+        return;
+      }
+      updates.badgeIconUrl = badgeIconUrl;
+    }
+  }
+
+  if (badgeIconLink !== undefined) {
+    if (user.premiumTier !== "pro") {
+      res.status(403).json({ error: "Custom badge icon requires Pro subscription" });
+      return;
+    }
+    if (badgeIconLink === null) {
+      updates.badgeIconLink = null;
+    } else {
+      try { new URL(badgeIconLink); } catch {
+        res.status(400).json({ error: "Invalid badge link URL" });
+        return;
+      }
+      updates.badgeIconLink = badgeIconLink;
     }
   }
 

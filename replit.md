@@ -1,72 +1,47 @@
 # Steam Family
 
-A Steam account-sharing / exchange platform ("Steam Family") — members share unused Steam libraries, claim games, and level up through community participation. Includes an admin panel with security/anti-abuse tooling (IP bans, VPN detection, ban system).
+A Steam account sharing platform — users share unused Steam libraries, claim games, earn XP/points, and compete on the leaderboard. Includes premium and Pro subscription tiers with profile customization.
 
 ## Run & Operate
 
-- Two workflows are configured and run automatically in this Repl: `API Server` (Express API, port 8080) and `Start application` (Vite frontend, port 5000).
-- `pnpm --filter @workspace/api-server run dev` — run the API server directly
-- `pnpm --filter @workspace/steamshare run dev` — run the frontend directly
+- `pnpm --filter @workspace/steamshare run dev` — frontend dev server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — API server (port 8080)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `SUPABASE_DATABASE_URL` — Supabase PostgreSQL connection string. `DATABASE_URL` remains a fallback for local/Replit-managed PostgreSQL.
-
-### Vercel database setup
-
-The frontend calls the API through same-origin `/api/*` routes. Vercel therefore needs `DATABASE_URL` and `SESSION_SECRET` in the Vercel project environment, and the database referenced by `DATABASE_URL` must have this project's schema. A reachable but empty database returns `accounts: []`; a database URL that cannot be reached causes the web page's data requests to return 500 errors.
-
-For Supabase on Vercel, use Supabase's connection pooler URL (session or transaction pooler) rather than an IPv6-only direct database host. The API enables TLS automatically for Supabase hosts and uses one pooled connection per Vercel function.
-
-Before the first Vercel deployment, apply the schema using the Vercel database connection in a secure shell or CI environment:
-
-```sh
-pnpm install --frozen-lockfile
-pnpm --filter @workspace/db run push
-```
-
-Do not add `db:push` to the Vercel build or server startup command. Schema changes should be applied separately, then the Vercel deployment can be rebuilt. The Replit development database is separate from an external Vercel database.
+- `pnpm --filter @workspace/db run push` — push DB schema changes to Postgres (dev only)
+- Required env: `DATABASE_URL` — Postgres connection string (add via Replit Secrets)
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
+- pnpm workspaces, Node.js 20, TypeScript 5.9
+- Frontend: React 19 + Vite + Tailwind CSS v4 + shadcn/ui
+- API: Express 5 + express-session
 - DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Validation: Zod (v4), drizzle-zod
+- API codegen: Orval (from OpenAPI spec in `lib/api-spec`)
 
 ## Where things live
 
-- `artifacts/steamshare` — Vite/React web application
-- `artifacts/api-server` — Express API and Vercel serverless app bundle
-- `lib/db/src/schema` — Drizzle/PostgreSQL schema source of truth
-- `lib/api-spec/openapi.yaml` — API contract source of truth
+- `artifacts/steamshare/` — React frontend
+- `artifacts/api-server/` — Express API server
+- `lib/db/src/schema/` — Drizzle schema (source of truth for DB shape)
+- `lib/api-spec/` — OpenAPI spec (source of truth for API contract)
+- `lib/api-client-react/` — generated React Query hooks (run codegen to regenerate)
+- `lib/api-zod/` — generated Zod schemas
 
 ## Architecture decisions
 
-- Password reset uses a 6-digit emailed OTP (no link), handled entirely on `/forgot-password` in a 3-step flow (email → code + new password → success). The OTP is stored in `passwordResetTokensTable` like the old hex token; only the format changed.
-- All admin/moderator notifications to users (report actions, listing approvals/rejections) are sent via the "Admin Bot" system user (`adminBot.ts`) so messages appear from the bot, not a real admin account.
-- VIP-only accounts (`vipOnly: boolean` on `accountsTable`) are filtered out from non-VIP users at the API level (both listing and detail endpoints). They show a gold "VIP" badge instead of "Free" or "pts" on cards.
-- Premium name color (`posterNameColor`) is shown when `premiumTier` is set AND either `premiumExpiresAt` is null (lifetime) or hasn't expired yet. The old code required a non-null `premiumExpiresAt`.
-
-## Product
-
-- Steam account sharing and exchange platform — users post Steam accounts, others claim them for free or for points.
-- VIP (pro) subscribers get: colored usernames with animated effects, VIP badge, ability to bypass like/comment unlock gates, ability to see and claim VIP-only listings.
-- Admin bot sends automated messages for report outcomes, listing approvals/rejections, and store purchases.
-
-## User preferences
-
-- Use the Replit-managed local PostgreSQL database for development for now; defer Supabase until requested.
+- Premium tiers: `premium` (basic customization) and `pro` (full customization incl. animated colors, pro badges, custom icon badge).
+- Custom icon badges (`badgeIconUrl` + `badgeIconLink`) are Pro-only — stored in the `users` table, shown on profile pages next to the user's name.
+- Session auth via express-session + connect-pg-simple. Sessions stored in Postgres.
+- Cron jobs run in-process in dev; on Vercel they're triggered via `/api/cron/tick` from an external cron.
 
 ## Gotchas
 
-- The `pnpm --filter @workspace/db run push` command requires an interactive TTY; run SQL migrations directly via `psql $DATABASE_URL` when in a non-interactive shell.
-- The `.migration-backup/` artifact workflows fail (no node_modules) — these can be ignored; only the `artifacts/` workflows are active.
-- The API server workflow named "API Server" (original) conflicts with the artifact-managed "artifacts/api-server: API Server" on port 8080. Only start one at a time.
+- After any change to `lib/db/src/schema/`, run `pnpm --filter @workspace/db run push` to apply migrations to the DB.
+- The two new columns added — `badge_icon_url` and `badge_icon_link` — need to be pushed to your DB before the custom badge feature works end-to-end.
+- API server requires `DATABASE_URL` secret to start fully. Without it the server starts but all DB calls fail with 500.
 
-## Pointers
+## User preferences
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+_Populate as you build — explicit user instructions worth remembering across sessions._

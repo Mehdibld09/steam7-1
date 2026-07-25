@@ -96,6 +96,8 @@ router.get("/:userId", async (req, res) => {
       premiumExpiresAt: usersTable.premiumExpiresAt,
       nameColor: usersTable.nameColor,
       badgeType: usersTable.badgeType,
+      badgeIconUrl: usersTable.badgeIconUrl,
+      badgeIconLink: usersTable.badgeIconLink,
     })
     .from(usersTable)
     .where(eq(usersTable.id, userId))
@@ -127,6 +129,8 @@ router.get("/:userId", async (req, res) => {
     ...user,
     nameColor: premiumActive ? user.nameColor : null,
     badgeType: premiumActive ? user.badgeType : null,
+    badgeIconUrl: premiumActive ? user.badgeIconUrl : null,
+    badgeIconLink: premiumActive ? user.badgeIconLink : null,
     premiumTier: premiumActive ? user.premiumTier : null,
     totalAccounts: Number(totalAccounts),
     totalLikesReceived: Number(totalLikesReceived),

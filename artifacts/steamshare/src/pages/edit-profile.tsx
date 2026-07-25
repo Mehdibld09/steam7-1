@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, Lock, Trash2, CheckCircle2, AlertTriangle, User, ArrowLeft, Crown, Palette, ShieldCheck, ShieldOff } from "lucide-react";
+import { Camera, Lock, Trash2, CheckCircle2, AlertTriangle, User, ArrowLeft, Crown, Palette, ShieldCheck, ShieldOff, ImageIcon, Link2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link } from "wouter";
 import { UserBadge, BADGE_OPTIONS } from "@/components/user-badge";
@@ -154,12 +154,24 @@ export default function EditProfile() {
   // Premium prefs
   const [prefLoading, setPrefLoading] = useState(false);
 
+  // Badge icon state (Pro only)
+  const [badgeIconUrl, setBadgeIconUrl] = useState("");
+  const [badgeIconLink, setBadgeIconLink] = useState("");
+
   const { data: premiumStatus, refetch: refetchPremium } = useQuery({
     queryKey: ["/api/premium/status"],
     queryFn: async () => {
       const res = await fetch("/api/premium/status", { credentials: "include" });
       if (!res.ok) return null;
-      return res.json() as Promise<{ tier: string | null; isActive: boolean; nameColor: string | null; badgeType: string | null; expiresAt: string | null }>;
+      return res.json() as Promise<{
+        tier: string | null;
+        isActive: boolean;
+        nameColor: string | null;
+        badgeType: string | null;
+        badgeIconUrl: string | null;
+        badgeIconLink: string | null;
+        expiresAt: string | null;
+      }>;
     },
     enabled: !!me,
   });
@@ -329,7 +341,7 @@ export default function EditProfile() {
     }
   };
 
-  const handlePremiumPref = async (patch: { nameColor?: string | null; badgeType?: string | null }) => {
+  const handlePremiumPref = async (patch: { nameColor?: string | null; badgeType?: string | null; badgeIconUrl?: string | null; badgeIconLink?: string | null }) => {
     setPrefLoading(true);
     try {
       const res = await fetch("/api/premium/preferences", {
@@ -570,6 +582,83 @@ export default function EditProfile() {
                 </p>
               )}
             </div>
+
+            {/* Custom Icon Badge — Pro only */}
+            {isPro && (
+              <div className="space-y-3 border-t border-border pt-4">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4 text-blue-400" />
+                  Custom Icon Badge
+                  <span className="text-[9px] text-blue-400 font-bold bg-blue-400/10 border border-blue-400/30 rounded-full px-2 py-0.5">PRO</span>
+                </label>
+                <p className="text-xs text-muted-foreground -mt-1">
+                  Show a custom image as your badge. Paste any image URL — it appears next to your name on your profile.
+                </p>
+
+                {/* Preview */}
+                {premiumStatus?.badgeIconUrl && (
+                  <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+                    <UserBadge
+                      badgeIconUrl={premiumStatus.badgeIconUrl}
+                      badgeIconLink={premiumStatus.badgeIconLink ?? undefined}
+                      size={28}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-foreground truncate">{premiumStatus.badgeIconUrl}</p>
+                      {premiumStatus.badgeIconLink && (
+                        <p className="text-[10px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+                          <Link2 className="h-3 w-3" />{premiumStatus.badgeIconLink}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handlePremiumPref({ badgeIconUrl: null })}
+                      disabled={prefLoading}
+                      className="text-xs text-destructive hover:text-destructive/80 shrink-0"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <Input
+                      placeholder="https://example.com/icon.png"
+                      value={badgeIconUrl}
+                      onChange={(e) => setBadgeIconUrl(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <Input
+                      placeholder="https://example.com (optional link)"
+                      value={badgeIconLink}
+                      onChange={(e) => setBadgeIconLink(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      if (!badgeIconUrl.trim()) return;
+                      handlePremiumPref({
+                        badgeIconUrl: badgeIconUrl.trim(),
+                        badgeIconLink: badgeIconLink.trim() || null,
+                      });
+                      setBadgeIconUrl("");
+                      setBadgeIconLink("");
+                    }}
+                    disabled={!badgeIconUrl.trim() || prefLoading}
+                    size="sm"
+                  >
+                    {prefLoading ? "Saving…" : "Save Icon Badge"}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="bg-card border border-border rounded-xl p-6 text-center space-y-3">

@@ -26,6 +26,8 @@ export const usersTable = pgTable("users", {
   premiumExpiresAt: timestamp("premium_expires_at", { withTimezone: true }),
   nameColor: text("name_color"),
   badgeType: text("badge_type"),
+  badgeIconUrl: text("badge_icon_url"),
+  badgeIconLink: text("badge_icon_link"),
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
   twoFactorCode: text("two_factor_code"),
   twoFactorCodeExpiresAt: timestamp("two_factor_code_expires_at", { withTimezone: true }),

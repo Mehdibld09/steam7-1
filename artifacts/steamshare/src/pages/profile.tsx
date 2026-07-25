@@ -223,7 +223,12 @@ export default function Profile() {
                     {displayedName}
                   </span>
                 )}
-                <UserBadge badgeType={(user as any).badgeType} size={20} />
+                <UserBadge
+                  badgeType={(user as any).badgeType}
+                  badgeIconUrl={(user as any).badgeIconUrl}
+                  badgeIconLink={(user as any).badgeIconLink}
+                  size={20}
+                />
                 {(user as any).displayName && (
                   <span className="text-xs text-muted-foreground font-normal">
                     @{user.username}

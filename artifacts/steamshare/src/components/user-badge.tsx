@@ -2,6 +2,8 @@ import { Medal, Star, Gem, Crown, Flame, Shield, Sparkles, Zap } from "lucide-re
 
 interface UserBadgeProps {
   badgeType?: string | null;
+  badgeIconUrl?: string | null;
+  badgeIconLink?: string | null;
   size?: number;
 }
 
@@ -27,7 +29,27 @@ const BADGE_ICONS: Record<string, { icon: React.ElementType; className: string }
   bolt:    { icon: Zap,      className: "text-yellow-300" },
 };
 
-export function UserBadge({ badgeType, size = 16 }: UserBadgeProps) {
+export function UserBadge({ badgeType, badgeIconUrl, badgeIconLink, size = 16 }: UserBadgeProps) {
+  // Custom image badge takes precedence (Pro-only feature)
+  if (badgeIconUrl) {
+    const img = (
+      <img
+        src={badgeIconUrl}
+        alt="badge"
+        title={badgeIconLink ? "Custom badge (click to visit)" : "Custom badge"}
+        style={{ width: size, height: size, flexShrink: 0, display: "inline-block", borderRadius: "50%", objectFit: "cover" }}
+      />
+    );
+    if (badgeIconLink) {
+      return (
+        <a href={badgeIconLink} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center" }}>
+          {img}
+        </a>
+      );
+    }
+    return img;
+  }
+
   if (!badgeType) return null;
 
   const config = BADGE_ICONS[badgeType];
