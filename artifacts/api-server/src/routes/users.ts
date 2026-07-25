@@ -50,6 +50,8 @@ router.get("/leaderboard", async (req, res) => {
       premiumExpiresAt: usersTable.premiumExpiresAt,
       nameColor: usersTable.nameColor,
       badgeType: usersTable.badgeType,
+      badgeIconUrl: usersTable.badgeIconUrl,
+      badgeIconLink: usersTable.badgeIconLink,
     })
     .from(usersTable)
     .where(
@@ -69,6 +71,8 @@ router.get("/leaderboard", async (req, res) => {
         ...u,
         nameColor: active ? u.nameColor : null,
         badgeType: active ? u.badgeType : null,
+        badgeIconUrl: active ? u.badgeIconUrl : null,
+        badgeIconLink: active ? u.badgeIconLink : null,
         premiumTier: active ? u.premiumTier : null,
       };
     }),

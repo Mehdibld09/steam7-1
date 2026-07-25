@@ -107,6 +107,8 @@ router.get("/", async (req, res) => {
         posterPremiumExpiresAt: usersTable.premiumExpiresAt,
         posterNameColor: usersTable.nameColor,
         posterBadgeType: usersTable.badgeType,
+        posterBadgeIconUrl: usersTable.badgeIconUrl,
+        posterBadgeIconLink: usersTable.badgeIconLink,
         isPinned: accountsTable.isPinned,
         vipOnly: accountsTable.vipOnly,
       })
@@ -151,6 +153,8 @@ router.get("/", async (req, res) => {
       myVote: myVotes.get(a.id) ?? null,
       posterNameColor: isPremiumActive ? a.posterNameColor : null,
       posterBadgeType: isPremiumActive ? a.posterBadgeType : null,
+      posterBadgeIconUrl: isPremiumActive ? a.posterBadgeIconUrl : null,
+      posterBadgeIconLink: isPremiumActive ? a.posterBadgeIconLink : null,
     };
   });
 
@@ -277,6 +281,8 @@ router.get("/:accountId", async (req, res) => {
       posterPremiumExpiresAt: usersTable.premiumExpiresAt,
       posterNameColor: usersTable.nameColor,
       posterBadgeType: usersTable.badgeType,
+      posterBadgeIconUrl: usersTable.badgeIconUrl,
+      posterBadgeIconLink: usersTable.badgeIconLink,
       lastCheckedAt: accountsTable.lastCheckedAt,
       lastCheckStatus: accountsTable.lastCheckStatus,
       healthFailCount: accountsTable.healthFailCount,
@@ -337,7 +343,18 @@ router.get("/:accountId", async (req, res) => {
     }
   }
 
-  res.json({ ...account, username: account.posterUsername ?? "", userHasLiked, myVote, userHasCommented, myClaim });
+  const now2 = new Date();
+  const isPremiumActive2 = account.posterPremiumTier && (!account.posterPremiumExpiresAt || new Date(account.posterPremiumExpiresAt as any) > now2);
+  res.json({
+    ...account,
+    username: account.posterUsername ?? "",
+    userHasLiked,
+    myVote,
+    userHasCommented,
+    myClaim,
+    posterBadgeIconUrl: isPremiumActive2 ? account.posterBadgeIconUrl : null,
+    posterBadgeIconLink: isPremiumActive2 ? account.posterBadgeIconLink : null,
+  });
 });
 
 // Edit account (owner / admin / mod)

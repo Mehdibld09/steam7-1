@@ -74,7 +74,7 @@ export default function Leaderboard() {
                 </span>
               );
             })()}
-            <UserBadge badgeType={user.badgeType} size={14} />
+            <UserBadge badgeType={user.badgeType} badgeIconUrl={user.badgeIconUrl} badgeIconLink={user.badgeIconLink} size={14} />
             {isAdmin && (
               <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/40 text-[9px] sm:text-[10px] flex items-center gap-0.5 h-4 px-1">
                 <Shield className="h-2 w-2 sm:h-2.5 sm:w-2.5" />ADMIN

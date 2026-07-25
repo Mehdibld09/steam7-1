@@ -647,6 +647,8 @@ export default function AccountDetail() {
                 })()}
                 <UserBadge
                   badgeType={(account as any).posterBadgeType}
+                  badgeIconUrl={(account as any).posterBadgeIconUrl}
+                  badgeIconLink={(account as any).posterBadgeIconLink}
                   size={14}
                 />
                 {poster?.badgeName && (
@@ -1206,6 +1208,8 @@ export default function AccountDetail() {
                                     )}
                                     <UserBadge
                                       badgeType={(comment as any).badgeType}
+                                      badgeIconUrl={(comment as any).badgeIconUrl}
+                                      badgeIconLink={(comment as any).badgeIconLink}
                                       size={14}
                                     />
                                   </span>
@@ -1471,6 +1475,8 @@ export default function AccountDetail() {
                                           )}
                                           <UserBadge
                                             badgeType={(reply as any).badgeType}
+                                            badgeIconUrl={(reply as any).badgeIconUrl}
+                                            badgeIconLink={(reply as any).badgeIconLink}
                                             size={12}
                                           />
                                         </span>
@@ -1625,6 +1631,8 @@ export default function AccountDetail() {
                     )}
                     <UserBadge
                       badgeType={(account as any).posterBadgeType}
+                      badgeIconUrl={(account as any).posterBadgeIconUrl}
+                      badgeIconLink={(account as any).posterBadgeIconLink}
                       size={14}
                     />
                   </div>

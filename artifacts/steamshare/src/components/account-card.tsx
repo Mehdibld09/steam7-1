@@ -127,6 +127,8 @@ export function AccountCard({
                 })()}
                 <UserBadge
                   badgeType={(account as any).posterBadgeType}
+                  badgeIconUrl={(account as any).posterBadgeIconUrl}
+                  badgeIconLink={(account as any).posterBadgeIconLink}
                   size={14}
                 />
                 <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">

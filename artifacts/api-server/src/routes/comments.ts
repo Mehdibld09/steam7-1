@@ -38,6 +38,8 @@ router.get("/", async (req, res) => {
       premiumExpiresAt: usersTable.premiumExpiresAt,
       nameColor: usersTable.nameColor,
       badgeType: usersTable.badgeType,
+      badgeIconUrl: usersTable.badgeIconUrl,
+      badgeIconLink: usersTable.badgeIconLink,
     })
     .from(commentsTable)
     .leftJoin(usersTable, eq(commentsTable.userId, usersTable.id))
@@ -72,6 +74,8 @@ router.get("/", async (req, res) => {
         userHasLiked: likedIds.has(c.id),
         nameColor: isPremiumActive ? c.nameColor : null,
         badgeType: isPremiumActive ? c.badgeType : null,
+        badgeIconUrl: isPremiumActive ? c.badgeIconUrl : null,
+        badgeIconLink: isPremiumActive ? c.badgeIconLink : null,
       };
     }),
   );
@@ -118,6 +122,8 @@ router.post("/", requireAuth, async (req, res) => {
       premiumExpiresAt: usersTable.premiumExpiresAt,
       nameColor: usersTable.nameColor,
       badgeType: usersTable.badgeType,
+      badgeIconUrl: usersTable.badgeIconUrl,
+      badgeIconLink: usersTable.badgeIconLink,
     })
     .from(usersTable)
     .where(eq(usersTable.id, userId))
@@ -154,6 +160,8 @@ router.post("/", requireAuth, async (req, res) => {
     userHasLiked: false,
     nameColor: isPremiumActive ? user?.nameColor : null,
     badgeType: isPremiumActive ? user?.badgeType : null,
+    badgeIconUrl: isPremiumActive ? user?.badgeIconUrl : null,
+    badgeIconLink: isPremiumActive ? user?.badgeIconLink : null,
   });
 });
 

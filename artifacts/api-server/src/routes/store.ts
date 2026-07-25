@@ -54,6 +54,8 @@ router.get("/products/:id", async (req, res) => {
       avatarUrl: usersTable.avatarUrl,
       nameColor: usersTable.nameColor,
       badgeType: usersTable.badgeType,
+      badgeIconUrl: usersTable.badgeIconUrl,
+      badgeIconLink: usersTable.badgeIconLink,
       premiumTier: usersTable.premiumTier,
       premiumExpiresAt: usersTable.premiumExpiresAt,
     })
@@ -70,6 +72,8 @@ router.get("/products/:id", async (req, res) => {
       username: r.displayName || r.username,
       nameColor: active ? r.nameColor : null,
       badgeType: active ? r.badgeType : null,
+      badgeIconUrl: active ? r.badgeIconUrl : null,
+      badgeIconLink: active ? r.badgeIconLink : null,
     };
   });
 

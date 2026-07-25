@@ -343,7 +343,7 @@ export default function ProductDetail() {
                           </span>
                         );
                       })()}
-                      {r.badgeType && <UserBadge badgeType={r.badgeType} size={13} />}
+                      {(r.badgeType || (r as any).badgeIconUrl) && <UserBadge badgeType={r.badgeType} badgeIconUrl={(r as any).badgeIconUrl} badgeIconLink={(r as any).badgeIconLink} size={13} />}
                       <StarRating rating={r.rating} size={12} />
                     </div>
                     <span className="text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleDateString()}</span>

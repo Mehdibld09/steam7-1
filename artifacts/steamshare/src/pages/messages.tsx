@@ -65,6 +65,8 @@ interface Conversation {
   partner_is_moderator: boolean;
   partner_name_color: string | null;
   partner_badge_type: string | null;
+  partner_badge_icon_url: string | null;
+  partner_badge_icon_link: string | null;
   partner_premium_tier: string | null;
   partner_premium_expires_at: string | null;
   content: string;
@@ -356,9 +358,9 @@ export default function Messages() {
   const [selectedNameColor, setSelectedNameColor] = useState<string | null>(
     null,
   );
-  const [selectedBadgeType, setSelectedBadgeType] = useState<string | null>(
-    null,
-  );
+  const [selectedBadgeType, setSelectedBadgeType] = useState<string | null>(null);
+  const [selectedBadgeIconUrl, setSelectedBadgeIconUrl] = useState<string | null>(null);
+  const [selectedBadgeIconLink, setSelectedBadgeIconLink] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const queryClient = useQueryClient();
@@ -406,6 +408,8 @@ export default function Messages() {
       setSelectedBadgeType(
         premiumActive ? (conv.partner_badge_type ?? null) : null,
       );
+      setSelectedBadgeIconUrl(premiumActive ? (conv.partner_badge_icon_url ?? null) : null);
+      setSelectedBadgeIconLink(premiumActive ? (conv.partner_badge_icon_link ?? null) : null);
       setSelectedIsAdmin(!!conv.partner_is_admin);
       setSelectedIsMod(!!conv.partner_is_moderator);
       setSelectedAvatarUrl(conv.partner_avatar_url ?? null);
@@ -430,6 +434,8 @@ export default function Messages() {
     setSelectedBadgeType(
       premiumActive ? (profile.badgeType ?? null) : null,
     );
+    setSelectedBadgeIconUrl(premiumActive ? (profile.badgeIconUrl ?? null) : null);
+    setSelectedBadgeIconLink(premiumActive ? (profile.badgeIconLink ?? null) : null);
     setSelectedIsAdmin(!!profile.isAdmin);
     setSelectedIsMod(!!profile.isModerator);
     setSelectedAvatarUrl(selectedUser.avatarUrl ?? null);
@@ -478,6 +484,8 @@ export default function Messages() {
     setSelectedBadgeType(
       premiumActive ? (conv.partner_badge_type ?? null) : null,
     );
+    setSelectedBadgeIconUrl(premiumActive ? (conv.partner_badge_icon_url ?? null) : null);
+    setSelectedBadgeIconLink(premiumActive ? (conv.partner_badge_icon_link ?? null) : null);
     setMobileView("chat");
   };
 
@@ -608,6 +616,8 @@ export default function Messages() {
                             return premiumActive ? (
                               <UserBadge
                                 badgeType={conv.partner_badge_type}
+                                badgeIconUrl={conv.partner_badge_icon_url}
+                                badgeIconLink={conv.partner_badge_icon_link}
                                 size={13}
                               />
                             ) : null;
@@ -702,8 +712,8 @@ export default function Messages() {
                         );
                       })()
                     )}
-                    {!isBot && selectedBadgeType && (
-                      <UserBadge badgeType={selectedBadgeType} size={15} />
+                    {!isBot && (selectedBadgeType || selectedBadgeIconUrl) && (
+                      <UserBadge badgeType={selectedBadgeType} badgeIconUrl={selectedBadgeIconUrl} badgeIconLink={selectedBadgeIconLink} size={15} />
                     )}
                     {isBot && (
                       <span className="bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">
