@@ -129,7 +129,7 @@ export default function Premium() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
           {/* Premium Card */}
-          <div className={`bg-card border rounded-2xl p-6 space-y-5 ${tierActive === "premium" ? "border-yellow-500/50" : "border-border"}`}>
+          <div className={`bg-card border rounded-2xl p-6 space-y-5 flex flex-col ${tierActive === "premium" ? "border-yellow-500/50" : "border-border"}`}>
             <div className="flex items-center gap-3">
               <img src="/badge-gold.png" alt="Premium" className="w-10 h-10" />
               <div>
@@ -176,31 +176,33 @@ export default function Premium() {
             </div>
 
             {/* CTA */}
-            {me ? (
-              tierActive === "premium" || tierActive === "pro" ? (
-                <Button disabled className="w-full" variant="outline">
-                  Already Active
-                </Button>
+            <div className="mt-auto">
+              {me ? (
+                tierActive === "premium" || tierActive === "pro" ? (
+                  <Button disabled className="w-full" variant="outline">
+                    Already Active
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+                    onClick={handleBuyWithPoints}
+                    disabled={buying || !pricing || (me as any).points < (pricing?.premiumPointsPrice ?? 9999)}
+                  >
+                    {buying ? "Processing..." : `Buy with ${pricing?.premiumPointsPrice ?? "..."} pts`}
+                  </Button>
+                )
               ) : (
-                <Button
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
-                  onClick={handleBuyWithPoints}
-                  disabled={buying || !pricing || (me as any).points < (pricing?.premiumPointsPrice ?? 9999)}
-                >
-                  {buying ? "Processing..." : `Buy with ${pricing?.premiumPointsPrice ?? "..."} pts`}
-                </Button>
-              )
-            ) : (
-              <Link href="/login">
-                <Button className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold">
-                  Login to Subscribe
-                </Button>
-              </Link>
-            )}
+                <Link href="/login">
+                  <Button className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold">
+                    Login to Subscribe
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Pro Card */}
-          <div className={`bg-card border rounded-2xl p-6 space-y-5 relative overflow-hidden ${tierActive === "pro" ? "border-blue-500/50" : "border-border"}`}>
+          <div className={`bg-card border rounded-2xl p-6 space-y-5 relative overflow-hidden flex flex-col ${tierActive === "pro" ? "border-blue-500/50" : "border-border"}`}>
 
             <div className="flex items-center gap-3">
               <img src="/badge-vip.png" alt="Pro VIP" className="w-10 h-10" />
@@ -240,35 +242,37 @@ export default function Premium() {
             </div>
 
             {/* CTA */}
-            {me ? (
-              tierActive === "pro" ? (
-                <Button disabled className="w-full" variant="outline">Already Active</Button>
+            <div className="mt-auto">
+              {me ? (
+                tierActive === "pro" ? (
+                  <Button disabled className="w-full" variant="outline">Already Active</Button>
+                ) : (
+                  <div className="space-y-2">
+                    {pricing?.proContactUrl?.startsWith("http") ? (
+                      <a href={pricing.proContactUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                          Buy Pro
+                        </Button>
+                      </a>
+                    ) : (
+                      <Link href={pricing?.proContactUrl ?? "/messages"}>
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                          Buy Pro
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                )
               ) : (
                 <div className="space-y-2">
-                  {pricing?.proContactUrl?.startsWith("http") ? (
-                    <a href={pricing.proContactUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold">
-                        Buy Pro
-                      </Button>
-                    </a>
-                  ) : (
-                    <Link href={pricing?.proContactUrl ?? "/messages"}>
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold">
-                        Buy Pro
-                      </Button>
-                    </Link>
-                  )}
+                  <Link href="/login">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                      Login to Buy Pro
+                    </Button>
+                  </Link>
                 </div>
-              )
-            ) : (
-              <div className="space-y-2">
-                <Link href="/login">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold">
-                    Login to Buy Pro
-                  </Button>
-                </Link>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
