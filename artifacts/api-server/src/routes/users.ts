@@ -163,6 +163,8 @@ router.get("/:userId/accounts", async (req, res) => {
       posterPremiumExpiresAt: usersTable.premiumExpiresAt,
       posterNameColor: usersTable.nameColor,
       posterBadgeType: usersTable.badgeType,
+      posterBadgeIconUrl: usersTable.badgeIconUrl,
+      posterBadgeIconLink: usersTable.badgeIconLink,
     })
     .from(accountsTable)
     .leftJoin(usersTable, eq(accountsTable.userId, usersTable.id))
@@ -182,6 +184,8 @@ router.get("/:userId/accounts", async (req, res) => {
         userHasLiked: false,
         posterNameColor: premiumActive ? a.posterNameColor : null,
         posterBadgeType: premiumActive ? a.posterBadgeType : null,
+        posterBadgeIconUrl: premiumActive ? a.posterBadgeIconUrl : null,
+        posterBadgeIconLink: premiumActive ? a.posterBadgeIconLink : null,
       };
     }),
   );

@@ -1302,6 +1302,10 @@ components:
           type: ["string", "null"]
         posterBadgeType:
           type: ["string", "null"]
+        posterBadgeIconUrl:
+          type: ["string", "null"]
+        posterBadgeIconLink:
+          type: ["string", "null"]
         title:
           type: string
         description:
