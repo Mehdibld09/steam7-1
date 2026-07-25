@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Coins, Crown, Star, Zap, Palette, Shield, ThumbsUp, MessageSquare, CheckCircle2, Gift } from "lucide-react";
+import { Coins, Crown, Star, Zap, Palette, Shield, ThumbsUp, MessageSquare, CheckCircle2, Gift, Award, Sparkles, CircleDot, Lock } from "lucide-react";
 import { Link } from "wouter";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -168,8 +168,8 @@ export default function Premium() {
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">What you get</p>
               <ul className="space-y-2">
-                <FeatureItem icon={<img src="/badge-gold.png" className="w-4 h-4" />} text="Gold badge next to your name" />
-                <FeatureItem icon={<Palette className="h-4 w-4 text-pink-400" />} text="Custom name color (6 colors)" />
+                <FeatureItem icon={<Award className="h-4 w-4 text-yellow-400" />} text="2 badges to choose from" />
+                <FeatureItem icon={<Palette className="h-4 w-4 text-pink-400" />} text="Custom name color" />
                 <FeatureItem icon={<Star className="h-4 w-4 text-yellow-400" />} text="Name color shown on all posts & comments" />
                 <FeatureItem icon={<Crown className="h-4 w-4 text-yellow-400" />} text="Stand out on the leaderboard" />
               </ul>
@@ -197,19 +197,10 @@ export default function Premium() {
                 </Button>
               </Link>
             )}
-            {me && pricing && (me as any).points < pricing.premiumPointsPrice && !tierActive && (
-              <p className="text-xs text-center text-muted-foreground">
-                You need {pricing.premiumPointsPrice - (me as any).points} more points.{" "}
-                <Link href="/earn" className="text-primary hover:underline">Earn points</Link>
-              </p>
-            )}
           </div>
 
           {/* Pro Card */}
           <div className={`bg-card border rounded-2xl p-6 space-y-5 relative overflow-hidden ${tierActive === "pro" ? "border-blue-500/50" : "border-border"}`}>
-            <div className="absolute top-3 right-3">
-              <Badge className="bg-blue-600/20 text-blue-400 border-blue-600/30 text-xs">USD only</Badge>
-            </div>
 
             <div className="flex items-center gap-3">
               <img src="/badge-vip.png" alt="Pro VIP" className="w-10 h-10" />
@@ -239,11 +230,12 @@ export default function Premium() {
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Everything in Premium, plus</p>
               <ul className="space-y-2">
-                <FeatureItem icon={<img src="/badge-vip.png" className="w-4 h-4" />} text="VIP badge (choose gold or VIP)" />
+                <FeatureItem icon={<Award className="h-4 w-4 text-blue-400" />} text="10 badges to choose from" />
+                <FeatureItem icon={<Sparkles className="h-4 w-4 text-purple-400" />} text="Animated name colors" />
+                <FeatureItem icon={<CircleDot className="h-4 w-4 text-blue-400" />} text="Profile border color" />
                 <FeatureItem icon={<ThumbsUp className="h-4 w-4 text-blue-400" />} text="Bypass like restrictions" />
                 <FeatureItem icon={<MessageSquare className="h-4 w-4 text-blue-400" />} text="Bypass reply restrictions" />
-                <FeatureItem icon={<Shield className="h-4 w-4 text-blue-400" />} text="Priority support" />
-                <FeatureItem icon={<Zap className="h-4 w-4 text-blue-400" />} text="Early access to new features" />
+                <FeatureItem icon={<Lock className="h-4 w-4 text-blue-400" />} text="Access VIP content" />
               </ul>
             </div>
 
