@@ -11,7 +11,7 @@ A Steam account-sharing / exchange platform ("Steam Family") — members share u
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string (Replit-managed Postgres is already provisioned and set)
+- Required env: `SUPABASE_DATABASE_URL` — Supabase PostgreSQL connection string. `DATABASE_URL` remains a fallback for local/Replit-managed PostgreSQL.
 
 ### Vercel database setup
 

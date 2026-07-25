@@ -4,13 +4,14 @@ import * as schema from "./schema";
 
 const { Pool } = pg;
 
-if (!process.env.DATABASE_URL) {
+const databaseUrl = process.env.SUPABASE_DATABASE_URL ?? process.env.DATABASE_URL;
+
+if (!databaseUrl) {
   throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
+    "SUPABASE_DATABASE_URL or DATABASE_URL must be set. Did you forget to provision a database?",
   );
 }
 
-const databaseUrl = process.env.DATABASE_URL;
 const isSupabaseDatabase = (() => {
   try {
     const hostname = new URL(databaseUrl).hostname;
