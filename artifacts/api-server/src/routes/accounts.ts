@@ -518,11 +518,11 @@ router.post("/:accountId/claim", requireAuth, async (req, res) => {
       tx.update(usersTable).set({ points: sql`${usersTable.points} + ${lockedAccount.pointsCost}` }).where(eq(usersTable.id, account.userId)),
     ]);
 
-    if (lockedAccount.pointsCost > 0) {
-      await tx.update(accountsTable).set({ isAvailable: false, claimsCount: sql`${accountsTable.claimsCount} + 1` }).where(eq(accountsTable.id, accountId));
-    } else {
-      await tx.update(accountsTable).set({ claimsCount: sql`${accountsTable.claimsCount} + 1` }).where(eq(accountsTable.id, accountId));
-    }
+    // A paid listing can be claimed by more than one user. Keep it visible
+    // after a claim; health checks and explicit deletion control availability.
+    await tx.update(accountsTable)
+      .set({ claimsCount: sql`${accountsTable.claimsCount} + 1` })
+      .where(eq(accountsTable.id, accountId));
 
     // Persist the claim so credentials survive page refreshes
     await tx.insert(accountClaimsTable).values({
