@@ -474,10 +474,9 @@ export default function EditProfile() {
                 <Palette className="h-4 w-4" /> Name Color
               </label>
               <div className="flex flex-wrap gap-2">
-                {BASIC_COLORS.filter(c => !c.animated || isPro).map((c) => {
-                  const isAnimated = c.animated;
+                {BASIC_COLORS.map((c) => {
+                  const isProOnly = c.animated && !isPro;
                   const isSelected = premiumStatus?.nameColor === c.hex;
-                  const isProRequired = false;
                   const swatchClass = c.hex === "rainbow" ? "rainbow-swatch"
                     : c.hex === "fire" ? "fire-swatch"
                     : c.hex === "ocean" ? "ocean-swatch"
@@ -488,11 +487,11 @@ export default function EditProfile() {
                   return (
                     <button
                       key={c.hex}
-                      title={isProRequired ? `${c.label} requires Pro` : c.label}
-                      onClick={() => !isProRequired && handlePremiumPref({ nameColor: c.hex })}
-                      disabled={prefLoading || isProRequired}
-                      className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${isProRequired ? "opacity-40 cursor-not-allowed" : ""} ${swatchClass}`}
-                      style={isAnimated ? {
+                      title={isProOnly ? `${c.label} — Pro only` : c.label}
+                      onClick={() => !isProOnly && handlePremiumPref({ nameColor: c.hex })}
+                      disabled={prefLoading || isProOnly}
+                      className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${isProOnly ? "opacity-30 cursor-not-allowed" : ""} ${swatchClass}`}
+                      style={c.animated ? {
                         borderColor: isSelected ? "#fff" : "transparent",
                         boxShadow: isSelected ? "0 0 0 2px rgba(255,255,255,0.5)" : undefined,
                       } : {
@@ -534,11 +533,8 @@ export default function EditProfile() {
                   )}
                 </p>
               )}
-              {isPremium && !isPro && (
-                <p className="text-[10px] text-muted-foreground/70">🎨 Animated colors are exclusive to <Link href="/premium" className="text-primary hover:underline">VIP subscribers</Link>.</p>
-              )}
-              {isPro && (
-                <p className="text-[10px] text-muted-foreground/70">✨ VIP members get exclusive animated name colors.</p>
+              {!isPro && (
+                <p className="text-[10px] text-muted-foreground/70">✨ Animated colors are exclusive to <Link href="/premium" className="text-primary hover:underline">Pro subscribers</Link>.</p>
               )}
             </div>
 
@@ -584,79 +580,85 @@ export default function EditProfile() {
             </div>
 
             {/* Custom Icon Badge — Pro only */}
-            {isPro && (
-              <div className="space-y-3 border-t border-border pt-4">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4 text-blue-400" />
-                  Custom Icon Badge
-                  <span className="text-[9px] text-blue-400 font-bold bg-blue-400/10 border border-blue-400/30 rounded-full px-2 py-0.5">PRO</span>
-                </label>
-                <p className="text-xs text-muted-foreground -mt-1">
-                  Show a custom image as your badge. Paste any image URL — it appears next to your name on your profile.
-                </p>
+            <div className={`space-y-3 border-t border-border pt-4 ${!isPro ? "opacity-30 pointer-events-none select-none" : ""}`}>
+              <label className="text-sm font-medium flex items-center gap-2">
+                <ImageIcon className="h-4 w-4 text-blue-400" />
+                Custom Icon Badge
+                <span className="text-[9px] text-blue-400 font-bold bg-blue-400/10 border border-blue-400/30 rounded-full px-2 py-0.5">PRO</span>
+              </label>
+              <p className="text-xs text-muted-foreground -mt-1">
+                Show a custom image as your badge. Paste any image URL — it appears next to your name on your profile.
+              </p>
 
-                {/* Preview */}
-                {premiumStatus?.badgeIconUrl && (
-                  <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
-                    <UserBadge
-                      badgeIconUrl={premiumStatus.badgeIconUrl}
-                      badgeIconLink={premiumStatus.badgeIconLink ?? undefined}
-                      size={28}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-foreground truncate">{premiumStatus.badgeIconUrl}</p>
-                      {premiumStatus.badgeIconLink && (
-                        <p className="text-[10px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
-                          <Link2 className="h-3 w-3" />{premiumStatus.badgeIconLink}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handlePremiumPref({ badgeIconUrl: null })}
-                      disabled={prefLoading}
-                      className="text-xs text-destructive hover:text-destructive/80 shrink-0"
-                    >
-                      Remove
-                    </button>
+              {isPro && premiumStatus?.badgeIconUrl && (
+                <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+                  <UserBadge
+                    badgeIconUrl={premiumStatus.badgeIconUrl}
+                    badgeIconLink={premiumStatus.badgeIconLink ?? undefined}
+                    size={28}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">{premiumStatus.badgeIconUrl}</p>
+                    {premiumStatus.badgeIconLink && (
+                      <p className="text-[10px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+                        <Link2 className="h-3 w-3" />{premiumStatus.badgeIconLink}
+                      </p>
+                    )}
                   </div>
-                )}
-
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <ImageIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <Input
-                      placeholder="https://example.com/icon.png"
-                      value={badgeIconUrl}
-                      onChange={(e) => setBadgeIconUrl(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <Input
-                      placeholder="https://example.com (optional link)"
-                      value={badgeIconLink}
-                      onChange={(e) => setBadgeIconLink(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => {
-                      if (!badgeIconUrl.trim()) return;
-                      handlePremiumPref({
-                        badgeIconUrl: badgeIconUrl.trim(),
-                        badgeIconLink: badgeIconLink.trim() || null,
-                      });
-                      setBadgeIconUrl("");
-                      setBadgeIconLink("");
-                    }}
-                    disabled={!badgeIconUrl.trim() || prefLoading}
-                    size="sm"
+                  <button
+                    onClick={() => handlePremiumPref({ badgeIconUrl: null })}
+                    disabled={prefLoading}
+                    className="text-xs text-destructive hover:text-destructive/80 shrink-0"
                   >
-                    {prefLoading ? "Saving…" : "Save Icon Badge"}
-                  </Button>
+                    Remove
+                  </button>
                 </div>
+              )}
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <Input
+                    placeholder="https://example.com/icon.png"
+                    value={badgeIconUrl}
+                    onChange={(e) => setBadgeIconUrl(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <Input
+                    placeholder="https://example.com (optional link)"
+                    value={badgeIconLink}
+                    onChange={(e) => setBadgeIconLink(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    if (!badgeIconUrl.trim()) return;
+                    handlePremiumPref({
+                      badgeIconUrl: badgeIconUrl.trim(),
+                      badgeIconLink: badgeIconLink.trim() || null,
+                    });
+                    setBadgeIconUrl("");
+                    setBadgeIconLink("");
+                  }}
+                  disabled={!badgeIconUrl.trim() || prefLoading}
+                  size="sm"
+                >
+                  {prefLoading ? "Saving…" : "Save Icon Badge"}
+                </Button>
+              </div>
+            </div>
+            {!isPro && (
+              <div className="border-t border-border pt-4">
+                <Link href="/premium" className="block">
+                  <Button variant="outline" size="sm" className="w-full border-blue-500/30 text-blue-400 hover:bg-blue-500/10">
+                    <Crown className="h-3.5 w-3.5 mr-2" /> Upgrade to Pro to unlock animated colors & custom badge
+                  </Button>
+                </Link>
               </div>
             )}
           </div>
