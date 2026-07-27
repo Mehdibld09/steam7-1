@@ -167,7 +167,7 @@ export default function Home() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Search accounts, games, usernames…"
+                placeholder="Search…"
                 className="w-full bg-transparent pl-12 pr-3 py-3.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
               <Button
