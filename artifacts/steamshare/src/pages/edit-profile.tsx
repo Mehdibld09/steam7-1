@@ -533,9 +533,6 @@ export default function EditProfile() {
                   )}
                 </p>
               )}
-              {!isPro && (
-                <p className="text-[10px] text-muted-foreground/70">✨ Animated colors are exclusive to <Link href="/premium" className="text-primary hover:underline">Pro subscribers</Link>.</p>
-              )}
             </div>
 
             {/* Badge */}
@@ -572,11 +569,6 @@ export default function EditProfile() {
                   </button>
                 )}
               </div>
-              {!isPro && (
-                <p className="text-xs text-muted-foreground">
-                  Pro-only badges require a <Link href="/premium" className="text-primary hover:underline">Pro subscription</Link>.
-                </p>
-              )}
             </div>
 
             {/* Custom Icon Badge — Pro only */}
