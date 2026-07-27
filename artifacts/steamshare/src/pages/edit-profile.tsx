@@ -661,17 +661,72 @@ export default function EditProfile() {
             )}
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-xl p-6 text-center space-y-3">
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Crown className="h-5 w-5 text-yellow-400" />
-              <span className="font-semibold text-sm">Premium Customization</span>
+          <div className="bg-card border border-yellow-500/20 rounded-xl p-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide text-yellow-400">
+                <Crown className="h-4 w-4" /> Premium Customization
+              </h2>
+              <span className="text-[10px] bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 rounded-full px-2 py-0.5 font-bold flex items-center gap-1">
+                <Lock className="h-3 w-3" /> Locked
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Unlock custom name colors and badges with a Premium or Pro subscription.
+            <p className="text-xs text-muted-foreground -mt-2">
+              Upgrade to Premium or Pro to unlock these customizations.
             </p>
-            <Link href="/premium">
-              <Button className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-sm">
-                Get Premium
+
+            {/* Faded preview — non-interactive */}
+            <div className="opacity-40 pointer-events-none select-none space-y-5">
+              {/* Name Color preview */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Palette className="h-4 w-4" /> Name Color
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {BASIC_COLORS.filter(c => !c.animated).map((c) => (
+                    <div
+                      key={c.hex}
+                      className="w-8 h-8 rounded-full border-2 border-transparent"
+                      style={{ backgroundColor: c.hex }}
+                    />
+                  ))}
+                  {BASIC_COLORS.filter(c => c.animated).map((c) => (
+                    <div
+                      key={c.hex}
+                      className={`w-8 h-8 rounded-full border-2 border-transparent ${
+                        c.hex === "rainbow" ? "rainbow-swatch"
+                        : c.hex === "fire" ? "fire-swatch"
+                        : c.hex === "ocean" ? "ocean-swatch"
+                        : c.hex === "galaxy" ? "galaxy-swatch"
+                        : c.hex === "neon" ? "neon-swatch"
+                        : c.hex === "gold" ? "gold-swatch"
+                        : ""
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Badge preview */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Badge</label>
+                <div className="flex flex-wrap gap-2">
+                  {BADGE_OPTIONS.map((opt) => (
+                    <div
+                      key={opt.key}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm"
+                    >
+                      <UserBadge badgeType={opt.key} size={15} />
+                      <span>{opt.label}</span>
+                      {opt.pro && <span className="text-[9px] text-blue-400 font-bold ml-0.5">PRO</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <Link href="/premium" className="block">
+              <Button className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold">
+                <Crown className="h-4 w-4 mr-2" /> Get Premium to Unlock
               </Button>
             </Link>
           </div>

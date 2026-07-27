@@ -170,8 +170,6 @@ export default function Premium() {
               <ul className="space-y-2">
                 <FeatureItem icon={<Award className="h-4 w-4 text-yellow-400" />} text="2 badges to choose from" />
                 <FeatureItem icon={<Palette className="h-4 w-4 text-pink-400" />} text="Custom name color" />
-                <FeatureItem icon={<Star className="h-4 w-4 text-yellow-400" />} text="Name color shown on all posts & comments" />
-                <FeatureItem icon={<Crown className="h-4 w-4 text-yellow-400" />} text="Stand out on the leaderboard" />
               </ul>
             </div>
 
@@ -234,7 +232,6 @@ export default function Premium() {
               <ul className="space-y-2">
                 <FeatureItem icon={<Award className="h-4 w-4 text-blue-400" />} text="8 badges to choose from + custom badge" />
                 <FeatureItem icon={<Sparkles className="h-4 w-4 text-purple-400" />} text="Animated name colors" />
-                <FeatureItem icon={<CircleDot className="h-4 w-4 text-blue-400" />} text="Profile border color" />
                 <FeatureItem icon={<ThumbsUp className="h-4 w-4 text-blue-400" />} text="Bypass like restrictions" />
                 <FeatureItem icon={<MessageSquare className="h-4 w-4 text-blue-400" />} text="Bypass reply restrictions" />
                 <FeatureItem icon={<Lock className="h-4 w-4 text-blue-400" />} text="Access VIP content" />
