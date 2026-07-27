@@ -4,10 +4,11 @@ import { AccountCard } from "@/components/account-card";
 import { AdBanner } from "@/components/ad-banner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Megaphone, Pin, ChevronRight, Plus, Users } from "lucide-react";
+import { Megaphone, Pin, ChevronRight, Plus, Users, Search } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
 
 async function fetchStats() {
   const res = await fetch("/api/stats", { credentials: "include" });
@@ -39,6 +40,9 @@ async function pinAccount(accountId: number, pinned: boolean) {
 }
 
 export default function Home() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [, navigate] = useLocation();
+
   const {
     data: accountsData,
     isLoading: accountsLoading,
@@ -67,6 +71,18 @@ export default function Home() {
     await pinAccount(accountId, false);
     queryClient.invalidateQueries({ queryKey: getListAccountsQueryKey({ sort: "recent", limit: 12 }) });
   };
+
+  const handleSearch = () => {
+    const q = searchQuery.trim();
+    if (q) {
+      navigate(`/browse?search=${encodeURIComponent(q)}`);
+    } else {
+      navigate("/browse");
+    }
+  };
+
+  const accountsList = accountsData?.accounts ?? [];
+  const hitLimit = accountsList.length >= 12;
 
   return (
     <Layout>
@@ -134,6 +150,34 @@ export default function Home() {
                 </Button>
               </Link>
             )}
+          </div>
+
+          {/* Animated search bar */}
+          <div className="relative mt-8 w-full max-w-2xl mx-auto">
+            {/* Pulsing glow layer behind the input */}
+            <div
+              className="absolute -inset-[2px] rounded-xl bg-primary/50 blur-[4px] animate-pulse pointer-events-none"
+              style={{ animationDuration: "1.8s" }}
+            />
+            {/* Input row */}
+            <div className="relative flex items-center bg-background rounded-xl border border-primary/40 overflow-hidden shadow-lg">
+              <Search className="absolute left-4 h-5 w-5 text-muted-foreground pointer-events-none shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="Search accounts, games, usernames…"
+                className="w-full bg-transparent pl-12 pr-3 py-3.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
+              <Button
+                onClick={handleSearch}
+                className="m-1.5 shrink-0 font-semibold"
+                size="sm"
+              >
+                Search
+              </Button>
+            </div>
           </div>
 
         </div>
@@ -216,22 +260,39 @@ export default function Home() {
               </Button>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
-              {accountsData?.accounts?.map((account) => (
-                <AccountCard
-                  key={account.id}
-                  account={account}
-                  isAdmin={(me as any)?.isAdmin}
-                  onPin={handlePin}
-                  onUnpin={handleUnpin}
-                />
-              ))}
-              {(accountsData?.accounts?.length ?? 0) === 0 && (
-                <div className="py-12 text-center text-muted-foreground border border-dashed border-border rounded-xl">
-                  No accounts yet. Be the first to upload!
+            <>
+              <div className="flex flex-col gap-3">
+                {accountsList.map((account) => (
+                  <AccountCard
+                    key={account.id}
+                    account={account}
+                    isAdmin={(me as any)?.isAdmin}
+                    onPin={handlePin}
+                    onUnpin={handleUnpin}
+                  />
+                ))}
+                {accountsList.length === 0 && (
+                  <div className="py-12 text-center text-muted-foreground border border-dashed border-border rounded-xl">
+                    No accounts yet. Be the first to upload!
+                  </div>
+                )}
+              </div>
+
+              {/* Load More → browse page */}
+              {hitLimit && (
+                <div className="flex justify-center pt-6">
+                  <Link href="/browse">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="px-10 font-semibold border-primary/30 hover:border-primary/60 hover:bg-primary/5 gap-2"
+                    >
+                      Load More <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
                 </div>
               )}
-            </div>
+            </>
           )}
         </section>
       </div>
