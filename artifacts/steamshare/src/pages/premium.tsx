@@ -92,8 +92,8 @@ export default function Premium() {
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <Crown className="h-8 w-8 text-yellow-400" />
-            <h1 className="text-3xl font-black">Premium Membership</h1>
+            <Crown className="h-8 w-8 gold-text" />
+            <h1 className="text-3xl font-black gold-text">Premium Membership</h1>
           </div>
           <p className="text-muted-foreground max-w-lg mx-auto">
             Unlock exclusive perks, stand out with custom name colors and badges, and enjoy an enhanced experience.
@@ -133,7 +133,7 @@ export default function Premium() {
             <div className="flex items-center gap-3">
               <img src="/badge-gold.png" alt="Premium" className="w-10 h-10" />
               <div>
-                <h2 className="text-xl font-black">Premium</h2>
+                <h2 className="text-xl font-black" style={{color:"#ffd700"}}>Premium</h2>
                 <p className="text-xs text-muted-foreground">Buy with points or USD</p>
               </div>
               {tierActive === "premium" && (
@@ -148,14 +148,14 @@ export default function Premium() {
                   <div className="flex items-center gap-2">
                     <Coins className="h-4 w-4 text-primary shrink-0" />
                     <span className="font-bold text-primary text-lg">{pricing.premiumPointsPrice} pts</span>
-                    <span className="text-xs font-semibold animate-pulse bg-gradient-to-r from-primary via-purple-400 to-primary bg-clip-text text-transparent bg-[length:200%] [animation:rainbow-shift_3s_linear_infinite]">/ month</span>
+                    <span className="text-xs font-semibold gold-text">/ month</span>
                   </div>
                   {pricing.premiumUsdCents > 0 && (
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-sm">or</span>
                       <OriginalPrice cents={pricing.premiumUsdCents} />
                       <span className="font-bold text-lg">{formatUsd(pricing.premiumUsdCents)}</span>
-                      <span className="text-xs font-semibold bg-gradient-to-r from-primary via-purple-400 to-primary bg-clip-text text-transparent bg-[length:200%] [animation:rainbow-shift_3s_linear_infinite]">/ year</span>
+                      <span className="text-xs font-semibold gold-text">/ year</span>
                     </div>
                   )}
                 </>
@@ -205,7 +205,7 @@ export default function Premium() {
             <div className="flex items-center gap-3">
               <img src="/badge-vip.png" alt="Pro VIP" className="w-10 h-10" />
               <div>
-                <h2 className="text-xl font-black">Pro</h2>
+                <h2 className="text-xl font-black gold-text">Pro</h2>
                 <p className="text-xs text-muted-foreground">All Premium features + more</p>
               </div>
               {tierActive === "pro" && (
@@ -219,7 +219,7 @@ export default function Premium() {
                 <div className="flex items-center gap-2">
                   <OriginalPrice cents={pricing.proUsdCents} />
                   <span className="font-bold text-lg">{formatUsd(pricing.proUsdCents)}</span>
-                  <span className="text-xs font-semibold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent bg-[length:200%] [animation:rainbow-shift_3s_linear_infinite]">/ year</span>
+                  <span className="text-xs font-semibold gold-text">/ year</span>
                 </div>
               ) : (
                 <div className="h-8 bg-secondary animate-pulse rounded" />
@@ -231,7 +231,7 @@ export default function Premium() {
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Everything in Premium, plus</p>
               <ul className="space-y-2">
                 <FeatureItem icon={<Award className="h-4 w-4 text-blue-400" />} text="8 badges to choose from + custom badge" />
-                <FeatureItem icon={<Sparkles className="h-4 w-4 text-purple-400" />} text="Animated name colors" />
+                <FeatureItem icon={<Sparkles className="h-4 w-4 text-purple-400" />} text={<span className="aurora-text">Animated name colors</span>} />
                 <FeatureItem icon={<ThumbsUp className="h-4 w-4 text-blue-400" />} text="Bypass like restrictions" />
                 <FeatureItem icon={<MessageSquare className="h-4 w-4 text-blue-400" />} text="Bypass reply restrictions" />
                 <FeatureItem icon={<Lock className="h-4 w-4 text-blue-400" />} text="Access VIP content" />
@@ -385,7 +385,7 @@ function RedeemCodeBox({ me, status, onSuccess }: { me: any; status: any; onSucc
   );
 }
 
-function FeatureItem({ icon, text }: { icon: React.ReactNode; text: string }) {
+function FeatureItem({ icon, text }: { icon: React.ReactNode; text: React.ReactNode }) {
   return (
     <li className="flex items-center gap-2 text-sm">
       <span className="shrink-0">{icon}</span>
