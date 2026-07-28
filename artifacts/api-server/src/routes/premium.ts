@@ -7,8 +7,8 @@ import { getSetting, getAllXpSettings } from "../lib/settings";
 
 const router = express.Router();
 
-const BASIC_COLORS = ["#ef4444","#f97316","#eab308","#22c55e","#3b82f6","#8b5cf6","#ec4899","#06b6d4","#ffffff","#94a3b8","rainbow","fire","ocean","galaxy","neon","gold"];
-const PRO_ONLY_COLORS = ["rainbow","fire","ocean","galaxy","neon","gold"];
+const BASIC_COLORS = ["#ef4444","#f97316","#eab308","#22c55e","#3b82f6","#8b5cf6","#ec4899","#06b6d4","#ffffff","#94a3b8","rainbow","fire","ocean","galaxy","neon","gold","aurora","sunset","ice","toxic","rose","lava"];
+const PRO_ONLY_COLORS = ["rainbow","fire","ocean","galaxy","neon","gold","aurora","sunset","ice","toxic","rose","lava"];
 const VALID_BADGE_TYPES = ["gold","star","vip","crown","fire","shield","diamond","bolt"];
 
 function isActivePremium(user: any): boolean {

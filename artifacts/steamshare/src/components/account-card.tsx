@@ -102,20 +102,13 @@ export function AccountCard({
                 </Avatar>
                 {(() => {
                   const nc = (account as any).posterNameColor;
-                  const cls =
-                    nc === "rainbow"
-                      ? "rainbow-text"
-                      : nc === "fire"
-                        ? "fire-text"
-                        : nc === "ocean"
-                          ? "ocean-text"
-                          : nc === "galaxy"
-                            ? "galaxy-text"
-                            : nc === "neon"
-                              ? "neon-text"
-                              : nc === "gold"
-                                ? "gold-text"
-                                : null;
+                  const ANIMATED_COLOR_MAP: Record<string, string> = {
+                    rainbow: "rainbow-text", fire: "fire-text", ocean: "ocean-text",
+                    galaxy: "galaxy-text", neon: "neon-text", gold: "gold-text",
+                    aurora: "aurora-text", sunset: "sunset-text", ice: "ice-text",
+                    toxic: "toxic-text", rose: "rose-text", lava: "lava-text",
+                  };
+                  const cls = nc ? (ANIMATED_COLOR_MAP[nc] ?? null) : null;
                   return (
                     <span
                       className={`text-xs font-medium max-w-[80px]${cls ? ` ${cls}` : ""}`}

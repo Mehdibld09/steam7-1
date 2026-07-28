@@ -126,6 +126,16 @@ function CollapsibleSection({
   );
 }
 
+const ANIMATED_COLOR_MAP: Record<string, string> = {
+  rainbow: "rainbow-text", fire: "fire-text", ocean: "ocean-text",
+  galaxy: "galaxy-text", neon: "neon-text", gold: "gold-text",
+  aurora: "aurora-text", sunset: "sunset-text", ice: "ice-text",
+  toxic: "toxic-text", rose: "rose-text", lava: "lava-text",
+};
+function nameColorClass(nc: string | null | undefined): string | null {
+  return nc ? (ANIMATED_COLOR_MAP[nc] ?? null) : null;
+}
+
 function sanitizeHref(url: string): string {
   const trimmed = url.trim().toLowerCase();
   if (
@@ -617,20 +627,7 @@ export default function AccountDetail() {
               <div className="flex items-center gap-2 flex-wrap">
                 {(() => {
                   const nc = (account as any).posterNameColor;
-                  const cls =
-                    nc === "rainbow"
-                      ? "rainbow-text"
-                      : nc === "fire"
-                        ? "fire-text"
-                        : nc === "ocean"
-                          ? "ocean-text"
-                          : nc === "galaxy"
-                            ? "galaxy-text"
-                            : nc === "neon"
-                              ? "neon-text"
-                              : nc === "gold"
-                                ? "gold-text"
-                                : null;
+                  const cls = nameColorClass(nc);
                   return (
                     <Link
                       href={`/profile/${account.userId}`}
@@ -1409,70 +1406,19 @@ export default function AccountDetail() {
                                     <div className="flex justify-between items-start">
                                       <div>
                                         <span className="inline-flex items-center gap-1">
-                                          {(reply as any).nameColor ===
-                                          "rainbow" ? (
-                                            <Link
-                                              href={`/profile/${reply.userId}`}
-                                              className="rainbow-text font-semibold text-[11px] sm:text-xs"
-                                            >
-                                              {reply.username}
-                                            </Link>
-                                          ) : (reply as any).nameColor ===
-                                            "fire" ? (
-                                            <Link
-                                              href={`/profile/${reply.userId}`}
-                                              className="fire-text font-semibold text-[11px] sm:text-xs"
-                                            >
-                                              {reply.username}
-                                            </Link>
-                                          ) : (reply as any).nameColor ===
-                                            "ocean" ? (
-                                            <Link
-                                              href={`/profile/${reply.userId}`}
-                                              className="ocean-text font-semibold text-[11px] sm:text-xs"
-                                            >
-                                              {reply.username}
-                                            </Link>
-                                          ) : (reply as any).nameColor ===
-                                            "galaxy" ? (
-                                            <Link
-                                              href={`/profile/${reply.userId}`}
-                                              className="galaxy-text font-semibold text-[11px] sm:text-xs"
-                                            >
-                                              {reply.username}
-                                            </Link>
-                                          ) : (reply as any).nameColor ===
-                                            "neon" ? (
-                                            <Link
-                                              href={`/profile/${reply.userId}`}
-                                              className="neon-text font-semibold text-[11px] sm:text-xs"
-                                            >
-                                              {reply.username}
-                                            </Link>
-                                          ) : (reply as any).nameColor ===
-                                            "gold" ? (
-                                            <Link
-                                              href={`/profile/${reply.userId}`}
-                                              className="gold-text font-semibold text-[11px] sm:text-xs"
-                                            >
-                                              {reply.username}
-                                            </Link>
-                                          ) : (
-                                            <Link
-                                              href={`/profile/${reply.userId}`}
-                                              className="font-semibold text-[11px] sm:text-xs hover:text-primary transition-colors"
-                                              style={
-                                                (reply as any).nameColor
-                                                  ? {
-                                                      color: (reply as any)
-                                                        .nameColor,
-                                                    }
-                                                  : undefined
-                                              }
-                                            >
-                                              {reply.username}
-                                            </Link>
-                                          )}
+                                          {(() => {
+                                            const nc = (reply as any).nameColor;
+                                            const cls = nameColorClass(nc);
+                                            return (
+                                              <Link
+                                                href={`/profile/${reply.userId}`}
+                                                className={`font-semibold text-[11px] sm:text-xs hover:text-primary transition-colors${cls ? ` ${cls}` : ""}`}
+                                                style={!cls && nc ? { color: nc } : undefined}
+                                              >
+                                                {reply.username}
+                                              </Link>
+                                            );
+                                          })()}
                                           <UserBadge
                                             badgeType={(reply as any).badgeType}
                                             badgeIconUrl={(reply as any).badgeIconUrl}
@@ -1593,42 +1539,18 @@ export default function AccountDetail() {
                 </Avatar>
                 <div>
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    {(account as any).posterNameColor === "rainbow" ? (
-                      <span className="rainbow-text font-bold text-sm sm:text-base">
-                        {account.posterUsername}
-                      </span>
-                    ) : (account as any).posterNameColor === "fire" ? (
-                      <span className="fire-text font-bold text-sm sm:text-base">
-                        {account.posterUsername}
-                      </span>
-                    ) : (account as any).posterNameColor === "ocean" ? (
-                      <span className="ocean-text font-bold text-sm sm:text-base">
-                        {account.posterUsername}
-                      </span>
-                    ) : (account as any).posterNameColor === "galaxy" ? (
-                      <span className="galaxy-text font-bold text-sm sm:text-base">
-                        {account.posterUsername}
-                      </span>
-                    ) : (account as any).posterNameColor === "neon" ? (
-                      <span className="neon-text font-bold text-sm sm:text-base">
-                        {account.posterUsername}
-                      </span>
-                    ) : (account as any).posterNameColor === "gold" ? (
-                      <span className="gold-text font-bold text-sm sm:text-base">
-                        {account.posterUsername}
-                      </span>
-                    ) : (
-                      <span
-                        className="font-bold text-sm sm:text-base group-hover:text-primary transition-colors"
-                        style={
-                          (account as any).posterNameColor
-                            ? { color: (account as any).posterNameColor }
-                            : undefined
-                        }
-                      >
-                        {account.posterUsername}
-                      </span>
-                    )}
+                    {(() => {
+                      const nc = (account as any).posterNameColor;
+                      const cls = nameColorClass(nc);
+                      return (
+                        <span
+                          className={`font-bold text-sm sm:text-base group-hover:text-primary transition-colors${cls ? ` ${cls}` : ""}`}
+                          style={!cls && nc ? { color: nc } : undefined}
+                        >
+                          {account.posterUsername}
+                        </span>
+                      );
+                    })()}
                     <UserBadge
                       badgeType={(account as any).posterBadgeType}
                       badgeIconUrl={(account as any).posterBadgeIconUrl}

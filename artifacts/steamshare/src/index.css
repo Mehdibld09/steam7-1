@@ -292,6 +292,127 @@
   background-size: 300%;
   animation: gold-shift 3s linear infinite;
 }
+/* Aurora animated name */
+@keyframes aurora-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.aurora-text {
+  display: inline-block;
+  background: linear-gradient(90deg, #00ff87, #00d4ff, #a855f7, #00ff87);
+  background-size: 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: aurora-shift 4s ease infinite;
+}
+.aurora-swatch {
+  background: linear-gradient(135deg, #00ff87, #00d4ff, #a855f7, #00ff87);
+  background-size: 300%;
+  animation: aurora-shift 4s ease infinite;
+}
+
+/* Sunset animated name */
+@keyframes sunset-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.sunset-text {
+  display: inline-block;
+  background: linear-gradient(90deg, #f97316, #ec4899, #8b5cf6, #f97316);
+  background-size: 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: sunset-shift 3s ease infinite;
+}
+.sunset-swatch {
+  background: linear-gradient(135deg, #f97316, #ec4899, #8b5cf6, #f97316);
+  background-size: 300%;
+  animation: sunset-shift 3s ease infinite;
+}
+
+/* Ice animated name */
+@keyframes ice-shift {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 4px #bae6fd) drop-shadow(0 0 8px #7dd3fc88); }
+  50% { opacity: 0.75; filter: drop-shadow(0 0 8px #e0f2fe) drop-shadow(0 0 16px #bae6fd88); }
+}
+.ice-text {
+  display: inline-block;
+  background: linear-gradient(90deg, #bae6fd, #e0f2fe, #7dd3fc, #bae6fd);
+  background-size: 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: aurora-shift 4s ease infinite, ice-shift 2s ease-in-out infinite;
+}
+.ice-swatch {
+  background: linear-gradient(135deg, #bae6fd, #e0f2fe, #7dd3fc, #bae6fd);
+  background-size: 300%;
+  box-shadow: 0 0 6px #bae6fd88;
+  animation: aurora-shift 4s ease infinite;
+}
+
+/* Toxic animated name */
+@keyframes toxic-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px #84cc16) drop-shadow(0 0 8px #a3e63566); }
+  50% { filter: drop-shadow(0 0 10px #bef264) drop-shadow(0 0 20px #84cc1688); }
+}
+.toxic-text {
+  display: inline-block;
+  color: #a3e635;
+  animation: toxic-pulse 1.8s ease-in-out infinite;
+}
+.toxic-swatch {
+  background: #a3e635;
+  box-shadow: 0 0 8px #84cc16, 0 0 16px #a3e63588;
+  animation: toxic-pulse 1.8s ease-in-out infinite;
+}
+
+/* Rose animated name */
+@keyframes rose-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.rose-text {
+  display: inline-block;
+  background: linear-gradient(90deg, #fb7185, #f43f5e, #e879f9, #fb7185);
+  background-size: 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: rose-shift 3s ease infinite;
+}
+.rose-swatch {
+  background: linear-gradient(135deg, #fb7185, #f43f5e, #e879f9, #fb7185);
+  background-size: 300%;
+  animation: rose-shift 3s ease infinite;
+}
+
+/* Lava animated name */
+@keyframes lava-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.lava-text {
+  display: inline-block;
+  background: linear-gradient(90deg, #7f1d1d, #ef4444, #f97316, #fbbf24, #ef4444, #7f1d1d);
+  background-size: 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: lava-shift 2.5s ease infinite;
+}
+.lava-swatch {
+  background: linear-gradient(135deg, #7f1d1d, #ef4444, #f97316, #fbbf24, #ef4444, #7f1d1d);
+  background-size: 300%;
+  animation: lava-shift 2.5s ease infinite;
+}
+
 .avatar-glow {
   box-shadow: 0 0 0 2px rgba(0, 184, 148, 0.2), 0 0 14px rgba(0, 184, 148, 0.5);
   transition: box-shadow 0.2s ease;

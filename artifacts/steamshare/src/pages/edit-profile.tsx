@@ -40,6 +40,12 @@ const BASIC_COLORS = [
   { hex: "galaxy", label: "Galaxy 🌌", animated: true, proOnly: true },
   { hex: "neon", label: "Neon ⚡", animated: true, proOnly: true },
   { hex: "gold", label: "Gold ✨", animated: true, proOnly: true },
+  { hex: "aurora", label: "Aurora 🌌", animated: true, proOnly: true },
+  { hex: "sunset", label: "Sunset 🌅", animated: true, proOnly: true },
+  { hex: "ice", label: "Ice 🧊", animated: true, proOnly: true },
+  { hex: "toxic", label: "Toxic ☢️", animated: true, proOnly: true },
+  { hex: "rose", label: "Rose 🌹", animated: true, proOnly: true },
+  { hex: "lava", label: "Lava 🌋", animated: true, proOnly: true },
 ];
 
 function TwoFactorCard() {
@@ -483,6 +489,12 @@ export default function EditProfile() {
                     : c.hex === "galaxy" ? "galaxy-swatch"
                     : c.hex === "neon" ? "neon-swatch"
                     : c.hex === "gold" ? "gold-swatch"
+                    : c.hex === "aurora" ? "aurora-swatch"
+                    : c.hex === "sunset" ? "sunset-swatch"
+                    : c.hex === "ice" ? "ice-swatch"
+                    : c.hex === "toxic" ? "toxic-swatch"
+                    : c.hex === "rose" ? "rose-swatch"
+                    : c.hex === "lava" ? "lava-swatch"
                     : "";
                   return (
                     <button
@@ -528,6 +540,18 @@ export default function EditProfile() {
                     <span className="neon-text font-semibold">{me.username}</span>
                   ) : premiumStatus.nameColor === "gold" ? (
                     <span className="gold-text font-semibold">{me.username}</span>
+                  ) : premiumStatus.nameColor === "aurora" ? (
+                    <span className="aurora-text font-semibold">{me.username}</span>
+                  ) : premiumStatus.nameColor === "sunset" ? (
+                    <span className="sunset-text font-semibold">{me.username}</span>
+                  ) : premiumStatus.nameColor === "ice" ? (
+                    <span className="ice-text font-semibold">{me.username}</span>
+                  ) : premiumStatus.nameColor === "toxic" ? (
+                    <span className="toxic-text font-semibold">{me.username}</span>
+                  ) : premiumStatus.nameColor === "rose" ? (
+                    <span className="rose-text font-semibold">{me.username}</span>
+                  ) : premiumStatus.nameColor === "lava" ? (
+                    <span className="lava-text font-semibold">{me.username}</span>
                   ) : (
                     <span style={{ color: premiumStatus.nameColor }} className="font-semibold">{me.username}</span>
                   )}
