@@ -1613,16 +1613,14 @@ export default function AccountDetail() {
                   Manage Listing
                 </p>
                 <div className="flex flex-col gap-2">
-                  {user.id === account.userId && (
-                    <Button
-                      variant="outline"
-                      onClick={startEdit}
-                      className="w-full gap-2 text-xs sm:text-sm"
-                    >
-                      <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Edit
-                      Listing
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    onClick={startEdit}
+                    className="w-full gap-2 text-xs sm:text-sm"
+                  >
+                    <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Edit
+                    Listing
+                  </Button>
                   <Button
                     variant="destructive"
                     onClick={handleDelete}
