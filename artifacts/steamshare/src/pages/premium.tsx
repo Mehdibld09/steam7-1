@@ -92,8 +92,8 @@ export default function Premium() {
       <div className="container mx-auto px-4 py-10 max-w-4xl space-y-8">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Crown className="h-8 w-8 gold-text" />
+          <div className="flex flex-col items-center gap-1 mb-3 sm:flex-row sm:justify-center sm:gap-2">
+            <Crown className="h-9 w-9 gold-text shrink-0" />
             <h1 className="text-3xl font-black gold-text">Premium Membership</h1>
           </div>
           <p className="text-muted-foreground max-w-lg mx-auto">
