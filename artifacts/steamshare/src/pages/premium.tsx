@@ -32,6 +32,7 @@ export default function Premium() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [buying, setBuying] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"premium" | "pro">("premium");
 
   const { data: pricing } = useQuery<Pricing>({
     queryKey: ["/api/premium/pricing"],
@@ -125,11 +126,29 @@ export default function Premium() {
           </div>
         )}
 
+        {/* Mobile tab switcher — hidden on md+ where both cards show side by side */}
+        <div className="flex md:hidden bg-card border border-border rounded-xl p-1 gap-1">
+          <button
+            onClick={() => setMobileTab("premium")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${mobileTab === "premium" ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/40" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <img src="/badge-gold.png" alt="" className="w-4 h-4" />
+            <span style={mobileTab === "premium" ? {color:"#ffd700"} : {}}>Premium</span>
+          </button>
+          <button
+            onClick={() => setMobileTab("pro")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${mobileTab === "pro" ? "bg-blue-500/20 border border-blue-500/40" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <img src="/badge-vip.png" alt="" className="w-4 h-4" />
+            <span className={mobileTab === "pro" ? "gold-text" : ""}>Pro</span>
+          </button>
+        </div>
+
         {/* Tier Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
           {/* Premium Card */}
-          <div className={`bg-card border rounded-2xl p-6 space-y-5 flex flex-col ${tierActive === "premium" ? "border-yellow-500/50" : "border-border"}`}>
+          <div className={`bg-card border rounded-2xl p-6 space-y-5 flex flex-col ${mobileTab !== "premium" ? "hidden md:flex" : ""} ${tierActive === "premium" ? "border-yellow-500/50" : "border-border"}`}>
             <div className="flex items-center gap-3">
               <img src="/badge-gold.png" alt="Premium" className="w-10 h-10" />
               <div>
@@ -200,7 +219,7 @@ export default function Premium() {
           </div>
 
           {/* Pro Card */}
-          <div className={`bg-card border rounded-2xl p-6 space-y-5 relative overflow-hidden flex flex-col ${tierActive === "pro" ? "border-blue-500/50" : "border-border"}`}>
+          <div className={`bg-card border rounded-2xl p-6 space-y-5 relative overflow-hidden flex flex-col ${mobileTab !== "pro" ? "hidden md:flex" : ""} ${tierActive === "pro" ? "border-blue-500/50" : "border-border"}`}>
 
             <div className="flex items-center gap-3">
               <img src="/badge-vip.png" alt="Pro VIP" className="w-10 h-10" />
