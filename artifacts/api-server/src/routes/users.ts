@@ -152,6 +152,7 @@ router.get("/:userId/accounts", async (req, res) => {
       description: accountsTable.description,
       games: accountsTable.games,
       pointsCost: accountsTable.pointsCost,
+      vipOnly: accountsTable.vipOnly,
       isAvailable: accountsTable.isAvailable,
       likesCount: accountsTable.likesCount,
       claimsCount: accountsTable.claimsCount,

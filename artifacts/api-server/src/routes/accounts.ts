@@ -1,7 +1,7 @@
 // @ts-nocheck
 import express from "express";
 import { db, accountsTable, usersTable, likesTable, accountVotesTable, commentsTable, accountClaimsTable } from "@workspace/db";
-import { eq, desc, and, sql, inArray, isNull } from "drizzle-orm";
+import { eq, desc, asc, and, sql, inArray, isNull } from "drizzle-orm";
 import { CreateAccountBody } from "@workspace/api-zod";
 import { requireAuth, requireModOrAdmin } from "../middlewares/auth";
 import { checkSteamCredentials } from "../lib/steamChecker";
@@ -71,6 +71,11 @@ router.get("/", async (req, res) => {
   }
 
   const conditions = [eq(accountsTable.isAvailable, true), isNull(accountsTable.deletedAt)];
+  // "free" sort: show only accounts that cost 0 points and are not VIP-only
+  if (sort === "free") {
+    conditions.push(eq(accountsTable.pointsCost, 0));
+    conditions.push(eq(accountsTable.vipOnly, false));
+  }
   // VIP-only listings are visible to all users; claiming is gated on the frontend.
   if (game) conditions.push(sql`${game} = ANY(${accountsTable.games})`);
   if (search) {
@@ -115,7 +120,12 @@ router.get("/", async (req, res) => {
       .from(accountsTable)
       .leftJoin(usersTable, eq(accountsTable.userId, usersTable.id))
       .where(and(...conditions))
-      .orderBy(desc(accountsTable.isPinned), sort === "popular" ? desc(accountsTable.likesCount) : desc(accountsTable.createdAt))
+      .orderBy(
+        desc(accountsTable.isPinned),
+        sort === "popular" ? desc(accountsTable.likesCount) :
+        sort === "points" ? asc(accountsTable.pointsCost) :
+        desc(accountsTable.createdAt)
+      )
       .limit(limit)
       .offset(offset),
     db
