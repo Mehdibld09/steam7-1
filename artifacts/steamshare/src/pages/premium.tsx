@@ -148,14 +148,14 @@ export default function Premium() {
                   <div className="flex items-center gap-2">
                     <Coins className="h-4 w-4 text-primary shrink-0" />
                     <span className="font-bold text-primary text-lg">{pricing.premiumPointsPrice} pts</span>
-                    <span className="text-xs text-muted-foreground">/ month</span>
+                    <span className="text-xs font-semibold animate-pulse bg-gradient-to-r from-primary via-purple-400 to-primary bg-clip-text text-transparent bg-[length:200%] [animation:rainbow-shift_3s_linear_infinite]">/ month</span>
                   </div>
                   {pricing.premiumUsdCents > 0 && (
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-sm">or</span>
                       <OriginalPrice cents={pricing.premiumUsdCents} />
                       <span className="font-bold text-lg">{formatUsd(pricing.premiumUsdCents)}</span>
-                      <span className="text-xs text-muted-foreground">/ year</span>
+                      <span className="text-xs font-semibold bg-gradient-to-r from-primary via-purple-400 to-primary bg-clip-text text-transparent bg-[length:200%] [animation:rainbow-shift_3s_linear_infinite]">/ year</span>
                     </div>
                   )}
                 </>
@@ -219,7 +219,7 @@ export default function Premium() {
                 <div className="flex items-center gap-2">
                   <OriginalPrice cents={pricing.proUsdCents} />
                   <span className="font-bold text-lg">{formatUsd(pricing.proUsdCents)}</span>
-                  <span className="text-xs text-muted-foreground">/ year</span>
+                  <span className="text-xs font-semibold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent bg-[length:200%] [animation:rainbow-shift_3s_linear_infinite]">/ year</span>
                 </div>
               ) : (
                 <div className="h-8 bg-secondary animate-pulse rounded" />
