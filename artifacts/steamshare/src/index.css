@@ -292,6 +292,18 @@
   background-size: 300%;
   animation: gold-shift 3s linear infinite;
 }
+
+/* Gold animated color for SVG icons (background-clip doesn't work on SVGs) */
+@keyframes gold-icon-shift {
+  0%   { color: #b8860b; }
+  25%  { color: #ffd700; }
+  50%  { color: #fff8dc; }
+  75%  { color: #ffa500; }
+  100% { color: #b8860b; }
+}
+.gold-icon {
+  animation: gold-icon-shift 3s linear infinite;
+}
 /* Aurora animated name */
 @keyframes aurora-shift {
   0% { background-position: 0% 50%; }
