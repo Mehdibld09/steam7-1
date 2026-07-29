@@ -362,10 +362,6 @@ export default function AccountDetail() {
       patchAccount(id, {
         title: editTitle,
         description: editDesc,
-        games: editGames
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
         pointsCost: editCost,
       }),
     onSuccess: () => {
@@ -530,8 +526,11 @@ export default function AccountDetail() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Input
                     value={editGames}
-                    onChange={(e) => setEditGames(e.target.value)}
+                    readOnly
+                    disabled
                     placeholder="Games (comma-separated)"
+                    className="bg-muted/50 cursor-not-allowed text-muted-foreground"
+                    title="Game list is set automatically and cannot be edited"
                   />
                   <Input
                     type="number"
