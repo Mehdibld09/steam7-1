@@ -8,26 +8,30 @@ const router = express.Router();
 
 // ── List products ──
 router.get("/products", async (_req, res) => {
-  const products = await db.select().from(productsTable).orderBy(desc(productsTable.createdAt));
+  const [products, reviewStats] = await Promise.all([
+    db.select().from(productsTable).orderBy(desc(productsTable.createdAt)),
+    db
+      .select({
+        productId: productReviewsTable.productId,
+        count: sql<number>`count(*)`,
+        avg: sql<number>`round(avg(${productReviewsTable.rating})::numeric, 1)`,
+      })
+      .from(productReviewsTable)
+      .groupBy(productReviewsTable.productId),
+  ]);
 
-  const reviews = await db.select().from(productReviewsTable);
-  const stats = new Map();
-  for (const r of reviews) {
-    const s = stats.get(r.productId) || { count: 0, total: 0 };
-    s.count += 1;
-    s.total += r.rating;
-    stats.set(r.productId, s);
-  }
+  const statsMap = new Map(reviewStats.map((s) => [s.productId, s]));
 
   const result = products.map((p) => {
-    const s = stats.get(p.id);
+    const s = statsMap.get(p.id);
     return {
       ...p,
-      reviewsCount: s?.count ?? 0,
-      avgRating: s ? +(s.total / s.count).toFixed(1) : 0,
+      reviewsCount: s ? Number(s.count) : 0,
+      avgRating: s ? Number(s.avg) : 0,
     };
   });
 
+  res.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
   res.json(result);
 });
 

@@ -19,6 +19,7 @@ router.get("/", async (req, res) => {
     enteredIds = new Set(entries.map((e) => e.giveawayId));
   }
 
+  res.set("Cache-Control", userId ? "private, max-age=60" : "public, s-maxage=60, stale-while-revalidate=300");
   res.json(giveaways.map((g) => ({ ...g, userHasEntered: enteredIds.has(g.id) })));
 });
 

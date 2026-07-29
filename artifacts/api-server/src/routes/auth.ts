@@ -298,7 +298,18 @@ router.get("/me", requireAuth, async (req, res) => {
     user.banExpiresAt = null;
   }
 
-  const { passwordHash: _, ...safeUser } = user;
+  // Strip server-only fields that the frontend never needs
+  const {
+    passwordHash: _pw,
+    registrationIp: _rip,
+    lastLoginIp: _llip,
+    twoFactorCode: _tfc,
+    twoFactorCodeExpiresAt: _tfce,
+    emailVerificationToken: _evt,
+    emailVerificationExpiresAt: _evte,
+    ...safeUser
+  } = user;
+  res.set("Cache-Control", "private, no-store");
   res.json(safeUser);
 });
 

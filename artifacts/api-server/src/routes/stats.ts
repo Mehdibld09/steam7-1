@@ -20,22 +20,18 @@ router.get("/stats", async (_req, res) => {
       totalAccounts: sql<number>`count(*)`,
       totalClaims: sql<number>`coalesce(sum(${accountsTable.claimsCount}), 0)`,
     }).from(accountsTable),
-    db.select({ games: accountsTable.games })
-      .from(accountsTable)
-      .where(eq(accountsTable.isAvailable, true)),
+    db.execute(sql`
+      SELECT game, COUNT(*) AS count
+      FROM accounts, unnest(games) AS game
+      WHERE is_available = TRUE
+      GROUP BY game
+      ORDER BY count DESC
+      LIMIT 5
+    `),
   ]);
 
-  const counts: Record<string, number> = {};
-  for (const row of availableRows) {
-    for (const game of row.games ?? []) {
-      counts[game] = (counts[game] ?? 0) + 1;
-    }
-  }
-
-  const topGames = Object.entries(counts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([game, count]) => ({ game, count }));
+  const topGames = (availableRows.rows as { game: string; count: string }[])
+    .map(({ game, count }) => ({ game, count: Number(count) }));
 
   res.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
   res.json({
