@@ -4,13 +4,13 @@ import pino from "pino";
 
 const logger = pino({ name: "giveaway-scheduler" });
 
-const CHECK_INTERVAL_MS = 60_000; // every 1 minute
+const CHECK_INTERVAL_MS = 5 * 60_000; // every 5 minutes
 
 async function autoDrawExpiredGiveaways(): Promise<void> {
   const now = new Date();
 
   const expired = await db
-    .select()
+    .select({ id: giveawaysTable.id, autoApprove: giveawaysTable.autoApprove })
     .from(giveawaysTable)
     .where(
       and(

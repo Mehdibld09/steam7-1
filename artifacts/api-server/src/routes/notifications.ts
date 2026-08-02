@@ -1,7 +1,7 @@
 // @ts-nocheck
 import express from "express";
 import { db, notificationsTable } from "@workspace/db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
 const router = express.Router();
@@ -21,11 +21,12 @@ router.get("/", requireAuth, async (req, res) => {
 // GET /api/notifications/unread/count
 router.get("/unread/count", requireAuth, async (req, res) => {
   const userId = req.session.userId!;
-  const rows = await db
-    .select()
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
     .from(notificationsTable)
     .where(and(eq(notificationsTable.userId, userId), eq(notificationsTable.isRead, false)));
-  res.json({ count: rows.length });
+  res.set("Cache-Control", "private, max-age=30");
+  res.json({ count: Number(count) });
 });
 
 // POST /api/notifications/read-all

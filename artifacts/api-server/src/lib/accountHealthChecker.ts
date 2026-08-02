@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { db } from "@workspace/db";
 import { accountsTable } from "@workspace/db/schema";
-import { eq, lte, or, isNull } from "drizzle-orm";
+import { eq, and, lte, or, isNull } from "drizzle-orm";
 import { checkSteamCredentials } from "./steamChecker";
 import { logger } from "./logger";
 
@@ -34,9 +34,12 @@ export async function runHealthChecks(): Promise<void> {
     })
     .from(accountsTable)
     .where(
-      or(
-        isNull(accountsTable.lastCheckedAt),
-        lte(accountsTable.lastCheckedAt, sevenDaysAgo),
+      and(
+        eq(accountsTable.isAvailable, true),
+        or(
+          isNull(accountsTable.lastCheckedAt),
+          lte(accountsTable.lastCheckedAt, sevenDaysAgo),
+        ),
       ),
     );
 

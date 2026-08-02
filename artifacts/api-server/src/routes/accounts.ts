@@ -168,6 +168,13 @@ router.get("/", async (req, res) => {
     };
   });
 
+  // Cache anonymous paginated listing; skip caching for authenticated requests
+  // since they include personalised liked/vote state.
+  if (!userId) {
+    res.set("Cache-Control", "public, s-maxage=30, stale-while-revalidate=120");
+  } else {
+    res.set("Cache-Control", "private, max-age=15");
+  }
   res.json({ accounts: result, total: Number(count), page, limit });
 });
 

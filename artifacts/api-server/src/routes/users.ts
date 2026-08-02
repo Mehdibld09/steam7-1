@@ -1,7 +1,7 @@
 // @ts-nocheck
 import express from "express";
 import { db, usersTable, accountsTable, likesTable } from "@workspace/db";
-import { eq, desc, sql, ne } from "drizzle-orm";
+import { eq, desc, sql, ne, and, isNull } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -169,8 +169,9 @@ router.get("/:userId/accounts", async (req, res) => {
     })
     .from(accountsTable)
     .leftJoin(usersTable, eq(accountsTable.userId, usersTable.id))
-    .where(eq(accountsTable.userId, userId))
-    .orderBy(desc(accountsTable.createdAt));
+    .where(and(eq(accountsTable.userId, userId), isNull(accountsTable.deletedAt)))
+    .orderBy(desc(accountsTable.createdAt))
+    .limit(50);
 
   const now = new Date();
   res.json(
