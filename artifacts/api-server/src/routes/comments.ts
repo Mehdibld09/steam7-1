@@ -65,6 +65,13 @@ router.get("/", async (req, res) => {
   }
 
   const now = new Date();
+  // Anonymous requests are fully cacheable; authenticated ones include
+  // per-user liked state so keep them private but still allow short caching.
+  if (!userId) {
+    res.set("Cache-Control", "public, s-maxage=30, stale-while-revalidate=120");
+  } else {
+    res.set("Cache-Control", "private, max-age=15");
+  }
   res.json(
     comments.map((c) => {
       const isPremiumActive = c.premiumTier && c.premiumExpiresAt && new Date(c.premiumExpiresAt) > now;

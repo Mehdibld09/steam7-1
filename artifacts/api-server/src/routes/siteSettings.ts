@@ -1,10 +1,10 @@
 // @ts-nocheck
 import express from "express";
 import { db, siteSettingsTable, footerLinksTable, adsTable } from "@workspace/db";
-import { eq, asc, and } from "drizzle-orm";
+import { eq, asc, and, inArray } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/auth";
 import { invalidateWordCache } from "../lib/contentFilter";
-import { XP_DEFAULTS, XpSettingKey, getAllXpSettings } from "../lib/settings";
+import { XP_DEFAULTS, XpSettingKey, getAllXpSettings, invalidateSettingsCache } from "../lib/settings";
 
 const router = express.Router();
 
@@ -133,12 +133,17 @@ router.put("/xp-points", requireAdmin, async (req, res) => {
     }
   }
 
+  invalidateSettingsCache();
   res.json({ message: "XP/points settings updated" });
 });
 
 // GET /site-settings/ticker — public
 router.get("/ticker", async (_req, res) => {
-  const rows = await db.select().from(siteSettingsTable);
+  const TICKER_KEYS = ["ticker_enabled", "ticker_icon", "ticker_text", "ticker_link_label", "ticker_link_url"];
+  const rows = await db
+    .select({ key: siteSettingsTable.key, value: siteSettingsTable.value })
+    .from(siteSettingsTable)
+    .where(inArray(siteSettingsTable.key, TICKER_KEYS));
   const map: Record<string, string> = {};
   for (const r of rows) map[r.key] = r.value;
   res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");

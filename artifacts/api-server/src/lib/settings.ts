@@ -17,21 +17,51 @@ export const XP_DEFAULTS = {
 
 export type XpSettingKey = keyof typeof XP_DEFAULTS;
 
+// ── In-memory TTL cache ──────────────────────────────────────────────────────
+// Avoids a DB round-trip on every user action (comments, likes, uploads, etc.).
+// Settings changes take effect within 60 s without requiring a server restart.
+const settingsCache = new Map<string, { value: number; expiresAt: number }>();
+const SETTINGS_TTL = 60_000; // 60 seconds
+
+/** Wipe the cache after admin updates so changes take effect immediately. */
+export function invalidateSettingsCache(): void {
+  settingsCache.clear();
+}
+
 export async function getSetting(key: XpSettingKey): Promise<number> {
+  const now = Date.now();
+  const hit = settingsCache.get(key);
+  if (hit && hit.expiresAt > now) return hit.value;
+
   const [row] = await db
     .select({ value: siteSettingsTable.value })
     .from(siteSettingsTable)
     .where(eq(siteSettingsTable.key, key))
     .limit(1);
-  if (!row) return XP_DEFAULTS[key];
-  const parsed = parseInt(row.value, 10);
-  return isNaN(parsed) ? XP_DEFAULTS[key] : parsed;
+
+  const parsed = row ? parseInt(row.value, 10) : NaN;
+  const result = isNaN(parsed) ? XP_DEFAULTS[key] : parsed;
+  settingsCache.set(key, { value: result, expiresAt: now + SETTINGS_TTL });
+  return result;
 }
 
 export async function getAllXpSettings(): Promise<typeof XP_DEFAULTS> {
-  const rows = await db
-    .select()
-    .from(siteSettingsTable);
+  const now = Date.now();
+
+  // Serve entirely from cache if every key is still fresh
+  const keys = Object.keys(XP_DEFAULTS) as XpSettingKey[];
+  const allFresh = keys.every((k) => {
+    const hit = settingsCache.get(k);
+    return hit && hit.expiresAt > now;
+  });
+
+  if (allFresh) {
+    const result = { ...XP_DEFAULTS };
+    for (const k of keys) (result as any)[k] = settingsCache.get(k)!.value;
+    return result;
+  }
+
+  const rows = await db.select().from(siteSettingsTable);
 
   const result = { ...XP_DEFAULTS };
   for (const row of rows) {
@@ -39,6 +69,7 @@ export async function getAllXpSettings(): Promise<typeof XP_DEFAULTS> {
       const parsed = parseInt(row.value, 10);
       if (!isNaN(parsed)) {
         (result as any)[row.key] = parsed;
+        settingsCache.set(row.key, { value: parsed, expiresAt: now + SETTINGS_TTL });
       }
     }
   }
