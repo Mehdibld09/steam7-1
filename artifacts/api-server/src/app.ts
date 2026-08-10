@@ -1,13 +1,14 @@
 // @ts-nocheck
 import express from "express";
 import cors from "cors";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pinoHttp from "pino-http";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import rateLimit from "express-rate-limit";
-import { pool } from "@workspace/db";
+import { pool, isDatabaseConfigured } from "@workspace/db";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -51,14 +52,18 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   session({
-    store: new PgSession({
-      pool,
-      createTableIfMissing: true,
-      // Don't UPDATE the session row on every request just to bump `expire` —
-      // that's an extra DB write per API call. Sessions already get a fresh
-      // maxAge on login; this just stops the unnecessary churn.
-      disableTouch: true,
-    }),
+    ...(isDatabaseConfigured
+      ? {
+          store: new PgSession({
+            pool,
+            createTableIfMissing: true,
+            // Don't UPDATE the session row on every request just to bump `expire` —
+            // that's an extra DB write per API call. Sessions already get a fresh
+            // maxAge on login; this just stops the unnecessary churn.
+            disableTouch: true,
+          }),
+        }
+      : {}),
     secret: process.env.SESSION_SECRET ?? (() => {
       if (process.env.NODE_ENV === "production") {
         console.warn("[WARN] SESSION_SECRET is not set — using fallback. Set SESSION_SECRET in your environment variables.");
@@ -120,12 +125,28 @@ if (serveStatic) {
     path.dirname(fileURLToPath(import.meta.url)),
     "../../steamshare/dist",
   );
+  const indexFile = path.join(staticDir, "index.html");
+  const hasStaticBuild = fs.existsSync(indexFile);
 
-  app.use(express.static(staticDir));
+  if (hasStaticBuild) {
+    app.use(express.static(staticDir));
 
-  app.get(/^(?!\/api).*/, (_req, res) => {
-    res.sendFile(path.join(staticDir, "index.html"));
-  });
+    app.get(/^(?!\/api).*/, (_req, res) => {
+      res.sendFile(indexFile);
+    });
+  } else {
+    logger.warn(
+      { staticDir },
+      "Frontend static build not found; API is running in dev-only mode. Start the frontend separately at http://localhost:3000.",
+    );
+
+    app.get("/", (_req, res) => {
+      res.status(200).json({
+        status: "api-only",
+        message: "Frontend dev server is separate. Open http://localhost:3000 for the web UI.",
+      });
+    });
+  }
 }
 
 // Keep API failures JSON so the web client can finish its query state and
