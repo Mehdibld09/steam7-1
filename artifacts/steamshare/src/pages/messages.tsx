@@ -381,7 +381,7 @@ export default function Messages() {
   const { data: conversations } = useQuery({
     queryKey: ["conversations"],
     queryFn: fetchConversations,
-    refetchInterval: 45_000,
+    // No periodic polling: refresh on focus or user actions instead to reduce cost
   });
   const { data: selectedUser } = useGetUser(selectedUserId ?? 0, {
     query: {
@@ -445,7 +445,7 @@ export default function Messages() {
     queryKey: ["messages", selectedUserId],
     queryFn: () => fetchMessages(selectedUserId!),
     enabled: !!selectedUserId,
-    refetchInterval: 30_000,
+    // No periodic polling — messages refresh when user sends or manually refetches
   });
 
   const sendMutation = useMutation({

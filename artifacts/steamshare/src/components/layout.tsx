@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { useGetMe, getGetMeQueryKey, useLogout, useListGiveaways, getListGiveawaysQueryKey } from "@workspace/api-client-react";
+import { useGetMe, getGetMeQueryKey, useLogout } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -89,29 +89,31 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
   const profileRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
 
-  const { data: unreadCount = 0 } = useQuery({
-    queryKey: ["unread-messages"],
-    queryFn: fetchUnreadCount,
-    enabled: !!user,
-    refetchInterval: 120_000,
+  // Aggregate small pieces (notifications, unread counts, giveaways, announcements)
+  const { data: aggregate = {}, refetch: refetchAggregate } = useQuery({
+    queryKey: ["site-aggregate"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/aggregate", { credentials: "include" });
+        if (!res.ok) return {};
+        return res.json();
+      } catch {
+        return {};
+      }
+    },
+    // Keep results reasonably fresh but avoid periodic polling — refresh on user action instead
+    staleTime: 60_000,
   });
 
-  // Giveaway notifications — track unseen active giveaways
-  const { data: giveaways = [] } = useListGiveaways({
-    query: { queryKey: getListGiveawaysQueryKey(), refetchInterval: 300_000 },
-  });
-  const activeGiveaways = giveaways.filter((g) => g.isActive);
+  const unreadCount = aggregate.unreadMessagesCount ?? 0;
+  const giveaways = aggregate.giveaways ?? [];
+  const activeGiveaways = giveaways.filter((g: any) => g.isActive);
   const [seenIds, setSeenIds] = useState<number[]>(getSeenIds);
-  const newGiveaways = activeGiveaways.filter((g) => !seenIds.includes(g.id));
+  const newGiveaways = activeGiveaways.filter((g: any) => !seenIds.includes(g.id));
 
-  // App notifications (comment likes, replies, etc.) — derive unread count from the list
-  const { data: appNotifications = [], refetch: refetchNotifs } = useQuery({
-    queryKey: ["app-notifications"],
-    queryFn: fetchNotifications,
-    enabled: !!user,
-    refetchInterval: 120_000,
-  });
-  const notifUnread = appNotifications.filter((n) => !n.isRead).length;
+  const appNotifications = aggregate.appNotifications ?? [];
+  const refetchNotifs = refetchAggregate;
+  const notifUnread = (appNotifications as any[]).filter((n) => !n.isRead).length;
 
   const notifCount = newGiveaways.length + notifUnread;
 
@@ -120,15 +122,16 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
     setBellOpen((o) => !o);
     if (opening) {
       if (newGiveaways.length > 0) {
-        const allIds = activeGiveaways.map((g) => g.id);
+        const allIds = activeGiveaways.map((g: any) => g.id);
         markAllSeen(allIds);
         setSeenIds(allIds);
       }
       if (notifUnread > 0) {
+        // mark notifications read and then refetch aggregated data
         fetch("/api/notifications/read-all", { method: "POST", credentials: "include" })
-          .then(() => refetchNotifs())
+          .then(() => refetchAggregate())
           .catch(() => {});
-        queryClient.setQueryData(["app-notifications-unread"], 0);
+        queryClient.setQueryData(["site-aggregate"], (old: any) => ({ ...old, notifUnreadCount: 0 }));
       }
     }
   };
@@ -160,15 +163,7 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
 
   const xpProgress = user ? (user.xp % 100) : 0;
 
-  const { data: announcements = [] } = useQuery({
-    queryKey: ["announcements"],
-    queryFn: async () => {
-      const res = await fetch("/api/announcements", { credentials: "include" });
-      if (!res.ok) return [];
-      return res.json() as Promise<any[]>;
-    },
-    staleTime: 60_000,
-  });
+  const announcements = aggregate.announcements ?? [];
 
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupAnn, setPopupAnn] = useState<any>(null);

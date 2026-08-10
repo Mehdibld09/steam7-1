@@ -17,6 +17,7 @@ import storeRouter from "./store";
 import siteSettingsRouter from "./siteSettings";
 import premiumRouter from "./premium";
 import notificationsRouter from "./notifications";
+import aggregateRouter from "./aggregate";
 import cronRouter from "./cron";
 
 const router = express.Router();
@@ -38,6 +39,7 @@ router.use("/store", storeRouter);
 router.use("/site-settings", siteSettingsRouter);
 router.use("/premium", premiumRouter);
 router.use("/notifications", notificationsRouter);
+router.use("/aggregate", aggregateRouter);
 router.use(cronRouter);
 
 export default router;

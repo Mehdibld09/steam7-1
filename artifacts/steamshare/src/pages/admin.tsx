@@ -37,7 +37,7 @@ async function fetchDashboard() {
 }
 
 function DashboardTab() {
-  const { data, isLoading } = useQuery({ queryKey: ["admin-dashboard"], queryFn: fetchDashboard, refetchInterval: 120_000 });
+  const { data, isLoading } = useQuery({ queryKey: ["admin-dashboard"], queryFn: fetchDashboard });
   const [period, setPeriod] = useState<"24h" | "7d" | "30d">("7d");
 
   if (isLoading) return <div className="text-muted-foreground text-sm py-8 text-center">Loading dashboard...</div>;
