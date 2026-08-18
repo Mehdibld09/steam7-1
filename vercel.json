@@ -3,7 +3,7 @@
   "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/steamshare run build",
   "outputDirectory": "artifacts/steamshare/dist/public",
   "functions": {
-    "api/index.mjs": {
+    "api/index.js": {
       "maxDuration": 30
     }
   },
