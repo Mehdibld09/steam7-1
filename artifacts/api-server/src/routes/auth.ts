@@ -11,6 +11,7 @@ import {
   sendEmail,
   twoFactorEmailHtml,
   passwordChangeEmailHtml,
+  accountDeletionEmailHtml,
 } from "../lib/email";
 
 const router = express.Router();
@@ -472,8 +473,8 @@ router.post("/change-password/confirm", requireAuth, async (req, res) => {
   });
 });
 
-// Delete own account
-router.delete("/account", requireAuth, async (req, res) => {
+// Request an account deletion confirmation code after validating current password
+router.post("/account/delete/request", requireAuth, async (req, res) => {
   const { password } = req.body;
   if (!password) {
     res.status(400).json({ error: "Password required to delete account" });
@@ -497,6 +498,123 @@ router.delete("/account", requireAuth, async (req, res) => {
     res.status(401).json({ error: "Incorrect password" });
     return;
   }
+
+  const code = createVerificationCode();
+  const codeHash = await bcrypt.hash(code, 10);
+  const codeExpiresAt = Date.now() + 10 * 60 * 1000;
+
+  try {
+    await sendEmail(
+      user.email,
+      "Confirm Account Deletion — Steam Family",
+      accountDeletionEmailHtml(code, user.username),
+    );
+  } catch (emailErr: any) {
+    const message = emailErr?.message ?? "";
+    res.status(500).json({
+      error: message.includes("SMTP is not configured")
+        ? "Email delivery is not configured. Contact an administrator."
+        : "We couldn't send the confirmation code. Please try again.",
+    });
+    return;
+  }
+
+  (req.session as any).pendingAccountDeleteUserId = user.id;
+  (req.session as any).pendingAccountDeleteCodeHash = codeHash;
+  (req.session as any).pendingAccountDeleteCodeExpiresAt = codeExpiresAt;
+  req.session.save((saveErr: any) => {
+    if (saveErr) {
+      res.status(500).json({ error: "Session error" });
+      return;
+    }
+    res.json({ requiresAccountDeleteTwoFactor: true, email: user.email });
+  });
+});
+
+// Complete account deletion with the one-time email code
+router.post("/account/delete/confirm", requireAuth, async (req, res) => {
+  const { code } = req.body as { code?: string };
+  const pendingUserId = (req.session as any).pendingAccountDeleteUserId;
+  const pendingCodeHash = (req.session as any).pendingAccountDeleteCodeHash;
+  const pendingCodeExpiresAt = (req.session as any).pendingAccountDeleteCodeExpiresAt;
+
+  if (!pendingUserId || pendingUserId !== req.session.userId || !pendingCodeHash) {
+    res.status(400).json({ error: "No pending account deletion request. Request a new code." });
+    return;
+  }
+  if (!code || typeof code !== "string" || !/^\d{6}$/.test(code.trim())) {
+    res.status(400).json({ error: "Enter the 6-digit confirmation code." });
+    return;
+  }
+
+  const codeMatches = await bcrypt.compare(code.trim(), pendingCodeHash).catch(() => false);
+  if (!codeMatches) {
+    res.status(401).json({ error: "Incorrect confirmation code." });
+    return;
+  }
+  if (!pendingCodeExpiresAt || Date.now() > pendingCodeExpiresAt) {
+    res.status(401).json({ error: "Confirmation code expired. Request a new code." });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, pendingUserId)).limit(1);
+  if (user?.isBanned) {
+    const isActiveBan = !user.banExpiresAt || new Date() < new Date(user.banExpiresAt);
+    if (isActiveBan) {
+      res.status(403).json({ error: "Banned accounts cannot be deleted" });
+      return;
+    }
+  }
+
+  await db.delete(usersTable).where(eq(usersTable.id, pendingUserId));
+  req.session.destroy(() => {
+    res.clearCookie("connect.sid", { path: "/" });
+    res.json({ message: "Account deleted successfully." });
+  });
+});
+
+// Delete own account (legacy route requiring password + code fallback)
+router.delete("/account", requireAuth, async (req, res) => {
+  const { password, code } = req.body;
+  if (!password) {
+    res.status(400).json({ error: "Password required to delete account" });
+    return;
+  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId!)).limit(1);
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  // Banned users cannot delete their account to evade bans
+  if (user.isBanned) {
+    const isActiveBan = !user.banExpiresAt || new Date() < new Date(user.banExpiresAt);
+    if (isActiveBan) {
+      res.status(403).json({ error: "Banned accounts cannot be deleted" });
+      return;
+    }
+  }
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) {
+    res.status(401).json({ error: "Incorrect password" });
+    return;
+  }
+  
+  if (code) {
+    const pendingCodeHash = (req.session as any).pendingAccountDeleteCodeHash;
+    const pendingCodeExpiresAt = (req.session as any).pendingAccountDeleteCodeExpiresAt;
+    if (pendingCodeHash) {
+      const codeMatches = await bcrypt.compare(String(code).trim(), pendingCodeHash).catch(() => false);
+      if (!codeMatches) {
+        res.status(401).json({ error: "Incorrect confirmation code." });
+        return;
+      }
+      if (!pendingCodeExpiresAt || Date.now() > pendingCodeExpiresAt) {
+        res.status(401).json({ error: "Confirmation code expired. Request a new code." });
+        return;
+      }
+    }
+  }
+
   await db.delete(usersTable).where(eq(usersTable.id, user.id));
   req.session.destroy(() => {
     res.clearCookie("connect.sid", { path: "/" });

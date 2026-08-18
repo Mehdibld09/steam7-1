@@ -12,30 +12,36 @@ let _botId: number | null = null;
 export async function getOrCreateAdminBot(): Promise<number> {
   if (_botId !== null) return _botId;
 
-  const [existing] = await db
-    .select({ id: usersTable.id })
-    .from(usersTable)
-    .where(eq(usersTable.username, BOT_USERNAME))
-    .limit(1);
+  try {
+    const [existing] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.username, BOT_USERNAME))
+      .limit(1);
 
-  if (existing) {
-    _botId = existing.id;
-    logger.info({ botId: _botId }, "Admin Bot user found");
+    if (existing) {
+      _botId = existing.id;
+      logger.info({ botId: _botId }, "Admin Bot user found");
+      return _botId;
+    }
+
+    const [created] = await db
+      .insert(usersTable)
+      .values({
+        username: BOT_USERNAME,
+        email: BOT_EMAIL,
+        passwordHash: BOT_LOCKED_HASH,
+      })
+      .returning({ id: usersTable.id });
+
+    _botId = created?.id ?? 1;
+    logger.info({ botId: _botId }, "Admin Bot user created");
     return _botId;
+  } catch (e) {
+    logger.warn({ err: e }, "Admin bot init skipped (DB offline or mock)");
+    _botId = 1;
+    return 1;
   }
-
-  const [created] = await db
-    .insert(usersTable)
-    .values({
-      username: BOT_USERNAME,
-      email: BOT_EMAIL,
-      passwordHash: BOT_LOCKED_HASH,
-    })
-    .returning({ id: usersTable.id });
-
-  _botId = created.id;
-  logger.info({ botId: _botId }, "Admin Bot user created");
-  return _botId;
 }
 
 export async function sendBotMessage(toUserId: number, content: string): Promise<void> {

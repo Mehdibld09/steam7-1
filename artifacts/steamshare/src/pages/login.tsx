@@ -276,6 +276,28 @@ export default function Login() {
               Create one
             </Link>
           </p>
+
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            By signing in, you agree to our{" "}
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground underline"
+            >
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a
+              href="/terms#privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground underline"
+            >
+              Privacy Policy
+            </a>
+            .
+          </p>
         </div>
       </div>
     </div>

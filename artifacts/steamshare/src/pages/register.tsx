@@ -170,10 +170,26 @@ export default function Register() {
                           <div>
                             <p className="text-xs text-muted-foreground leading-relaxed">
                               I agree to the{" "}
-                              <span className="text-primary cursor-pointer hover:underline">Terms of Service</span>
-                              {" "}and{" "}
-                              <span className="text-primary cursor-pointer hover:underline">Privacy Policy</span>.
-                              I understand that sharing accounts may violate Steam's ToS and accept full responsibility.
+                              <a
+                                href="/terms"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary font-medium hover:underline inline-flex items-center gap-0.5"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Terms of Service
+                              </a>{" "}
+                              and{" "}
+                              <a
+                                href="/terms#privacy"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary font-medium hover:underline inline-flex items-center gap-0.5"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Privacy Policy
+                              </a>
+                              . I understand that sharing accounts may violate Steam's ToS and accept full responsibility.
                             </p>
                             <FormMessage className="mt-1" />
                           </div>

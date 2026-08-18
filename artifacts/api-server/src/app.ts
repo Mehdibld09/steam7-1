@@ -49,22 +49,26 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(
-  session({
-    store: new PgSession({
+const databaseUrl = process.env.SUPABASE_DATABASE_URL ?? process.env.DATABASE_URL;
+let sessionStore: any;
+if (databaseUrl) {
+  try {
+    sessionStore = new PgSession({
       pool,
       createTableIfMissing: true,
-      // Don't UPDATE the session row on every request just to bump `expire` —
-      // that's an extra DB write per API call. Sessions already get a fresh
-      // maxAge on login; this just stops the unnecessary churn.
       disableTouch: true,
-    }),
-    secret: process.env.SESSION_SECRET ?? (() => {
-      if (process.env.NODE_ENV === "production") {
-        console.warn("[WARN] SESSION_SECRET is not set — using fallback. Set SESSION_SECRET in your environment variables.");
-      }
-      return "steamshare-dev-secret";
-    })(),
+    });
+  } catch {
+    sessionStore = new session.MemoryStore();
+  }
+} else {
+  sessionStore = new session.MemoryStore();
+}
+
+app.use(
+  session({
+    store: sessionStore,
+    secret: process.env.SESSION_SECRET ?? "steamshare-dev-secret",
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -112,19 +116,33 @@ app.use("/api/accounts", uploadLimiter);
 
 app.use("/api", router);
 
-// Vercel serves the Vite build from outputDirectory; express.static is ignored there.
-const serveStatic = !process.env.VERCEL;
+const steamshareRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../steamshare",
+);
+const steamshareDist = path.resolve(steamshareRoot, "dist/public");
 
-if (serveStatic) {
-  const staticDir = path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    "../../steamshare/dist",
-  );
-
-  app.use(express.static(staticDir));
-
+if (process.env.NODE_ENV !== "production") {
+  try {
+    const { createServer: createViteServer } = await import("vite");
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+      root: steamshareRoot,
+      configFile: path.resolve(steamshareRoot, "vite.config.ts"),
+    });
+    app.use(vite.middlewares);
+  } catch (err) {
+    logger.warn({ err }, "Vite dev server failed to start, falling back to static files");
+    app.use(express.static(steamshareDist));
+    app.get(/^(?!\/api).*/, (_req, res) => {
+      res.sendFile(path.join(steamshareDist, "index.html"));
+    });
+  }
+} else {
+  app.use(express.static(steamshareDist));
   app.get(/^(?!\/api).*/, (_req, res) => {
-    res.sendFile(path.join(staticDir, "index.html"));
+    res.sendFile(path.join(steamshareDist, "index.html"));
   });
 }
 

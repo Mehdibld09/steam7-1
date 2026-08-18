@@ -5,33 +5,18 @@ import { startHealthCheckScheduler } from "./lib/accountHealthChecker";
 import { startGiveawayScheduler } from "./lib/giveawayScheduler";
 import { getOrCreateAdminBot } from "./lib/adminBot";
 
-const rawPort = process.env["PORT"];
+const port = 3000;
 
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
-}
-
-const port = Number(rawPort);
-
-if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
-}
-
-app.listen(port, (err) => {
+app.listen(port, "0.0.0.0", (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
     process.exit(1);
   }
 
-  logger.info({ port }, "Server listening");
-  // Skip background timers on Vercel — they prevent functions from idling
-  // and burn Fluid Active CPU. Use the /api/cron/tick endpoint + external
-  // cron (e.g. cron-job.org) to trigger these instead.
+  logger.info({ port }, "Server listening on 0.0.0.0:" + port);
   if (!process.env["VERCEL"]) {
-    startHealthCheckScheduler();
-    startGiveawayScheduler();
+    try { startHealthCheckScheduler(); } catch (e) { logger.warn({ err: e }, "Failed to start health check scheduler"); }
+    try { startGiveawayScheduler(); } catch (e) { logger.warn({ err: e }, "Failed to start giveaway scheduler"); }
   }
   getOrCreateAdminBot().catch((e) => logger.error({ err: e }, "Failed to init Admin Bot"));
 });

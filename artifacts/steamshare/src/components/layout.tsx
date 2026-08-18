@@ -9,6 +9,7 @@ import {
   MessageSquare, Menu, X, ChevronRight, Bell, Home,
   LayoutGrid, User, Settings, ShoppingBag, Sun, Moon, ArrowLeft,
   Megaphone, ExternalLink, Mail, Phone, MapPin, Crown, Heart, Reply,
+  HelpCircle, FileText, Send, Sparkles,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
@@ -75,6 +76,7 @@ const NAV_ITEMS = [
   { href: "/giveaways", label: "Giveaways", icon: Gift },
   { href: "/store", label: "Store", icon: ShoppingBag },
   { href: "/premium", label: "Premium", icon: Crown },
+  { href: "/faq", label: "FAQ & Help", icon: HelpCircle },
 ];
 
 export function Layout({ children, noFooter }: { children: React.ReactNode; noFooter?: boolean }) {
@@ -93,12 +95,17 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
     queryKey: ["unread-messages"],
     queryFn: fetchUnreadCount,
     enabled: !!user,
-    refetchInterval: 120_000,
+    refetchInterval: 180_000,
+    refetchIntervalInBackground: false,
   });
 
   // Giveaway notifications — track unseen active giveaways
   const { data: giveaways = [] } = useListGiveaways({
-    query: { queryKey: getListGiveawaysQueryKey(), refetchInterval: 300_000 },
+    query: {
+      queryKey: getListGiveawaysQueryKey(),
+      refetchInterval: 600_000,
+      refetchIntervalInBackground: false,
+    },
   });
   const activeGiveaways = giveaways.filter((g) => g.isActive);
   const [seenIds, setSeenIds] = useState<number[]>(getSeenIds);
@@ -109,7 +116,8 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
     queryKey: ["app-notifications"],
     queryFn: fetchNotifications,
     enabled: !!user,
-    refetchInterval: 120_000,
+    refetchInterval: 180_000,
+    refetchIntervalInBackground: false,
   });
   const notifUnread = appNotifications.filter((n) => !n.isRead).length;
 
@@ -639,85 +647,237 @@ export function Layout({ children, noFooter }: { children: React.ReactNode; noFo
   );
 }
 
-async function fetchSiteSettings() {
-  const res = await fetch("/api/site-settings");
-  if (!res.ok) return { contact: {}, footerLinks: [] };
-  return res.json() as Promise<{ contact: Record<string, string>; footerLinks: { id: number; label: string; url: string }[] }>;
-}
-
 function Footer() {
-  const { data } = useQuery({ queryKey: ["site-settings"], queryFn: fetchSiteSettings, staleTime: 60_000 });
-  const contact = data?.contact ?? {};
-  const footerLinks = data?.footerLinks ?? [];
-
-  const hasContact = contact.contact_email || contact.contact_phone || contact.contact_address || contact.contact_discord || contact.contact_twitter;
-
   return (
-    <footer className="border-t border-border bg-card/50">
-      {(hasContact || footerLinks.length > 0) && (
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
-          <div className="flex flex-wrap gap-10 justify-between">
-            {hasContact && (
-              <div className="min-w-[180px]">
-                <h4 className="text-sm font-semibold text-foreground mb-3">Contact Us</h4>
-                <ul className="space-y-2">
-                  {contact.contact_email && (
-                    <li className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Mail className="h-3.5 w-3.5 shrink-0 text-primary" />
-                      <a href={`mailto:${contact.contact_email}`} className="hover:text-foreground transition-colors">{contact.contact_email}</a>
-                    </li>
-                  )}
-                  {contact.contact_phone && (
-                    <li className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Phone className="h-3.5 w-3.5 shrink-0 text-primary" />
-                      <span>{contact.contact_phone}</span>
-                    </li>
-                  )}
-                  {contact.contact_address && (
-                    <li className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
-                      <span>{contact.contact_address}</span>
-                    </li>
-                  )}
-                  {contact.contact_discord && (
-                    <li className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <svg className="h-3.5 w-3.5 shrink-0 text-primary" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.08.114 18.1.135 18.11a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-                      <a href={contact.contact_discord} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Discord</a>
-                    </li>
-                  )}
-                  {contact.contact_twitter && (
-                    <li className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <svg className="h-3.5 w-3.5 shrink-0 text-primary" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                      <a href={contact.contact_twitter} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Twitter / X</a>
-                    </li>
-                  )}
-                </ul>
-              </div>
-            )}
-            {footerLinks.length > 0 && (
-              <div className="min-w-[140px]">
-                <h4 className="text-sm font-semibold text-foreground mb-3">Links</h4>
-                <ul className="space-y-2">
-                  {footerLinks.map((link) => (
-                    <li key={link.id}>
-                      <a
-                        href={link.url}
-                        target={link.url.startsWith("http") ? "_blank" : "_self"}
-                        rel="noopener noreferrer"
-                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {link.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+    <footer className="border-t border-border bg-card/60 mt-auto">
+      <div className="container mx-auto px-4 py-12 max-w-6xl">
+        {/* Main 4-column links grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+          {/* Column 1: About Steam Family */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+              About Steam Family
+            </h4>
+            <ul className="space-y-2.5 text-sm">
+              <li>
+                <Link href="/browse" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Explore Accounts
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 text-primary" />
+                  <span>Terms & Rules</span>
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="https://linktr.ee/mehdibld"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                >
+                  <Megaphone className="h-3.5 w-3.5 text-blue-400" />
+                  <span>Advertise with Us</span>
+                  <ExternalLink className="h-3 w-3 opacity-60" />
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:contact@steamfamily.xyz"
+                  className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                >
+                  <Mail className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>Contact Us</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 2: Features & Store */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+              Features & Store
+            </h4>
+            <ul className="space-y-2.5 text-sm">
+              <li>
+                <Link href="/premium" className="text-yellow-400 font-semibold hover:text-yellow-300 transition-colors flex items-center gap-1.5">
+                  <Crown className="h-3.5 w-3.5" />
+                  <span>Buy Pro</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/browse" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Shared Libraries
+                </Link>
+              </li>
+              <li>
+                <Link href="/submit" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Submit an Account
+                </Link>
+              </li>
+              <li>
+                <Link href="/store" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
+                  <ShoppingBag className="h-3.5 w-3.5 text-primary" />
+                  <span>Digital Store</span>
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 3: Help & Support */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+              Help & Support
+            </h4>
+            <ul className="space-y-2.5 text-sm">
+              <li>
+                <Link href="/faq" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
+                  <HelpCircle className="h-3.5 w-3.5 text-primary" />
+                  <span>FAQ</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Launcher Bypasses
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Steam Error Codes
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="mailto:contact@steamfamily.xyz"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  contact@steamfamily.xyz
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 4: Community */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+              Community
+            </h4>
+            <ul className="space-y-2.5 text-sm">
+              <li>
+                <a
+                  href="https://t.me/Steam_Family"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                >
+                  <Send className="h-3.5 w-3.5 text-blue-400" />
+                  <span>Telegram Channel</span>
+                  <ExternalLink className="h-3 w-3 opacity-60" />
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://discord.gg/3w69MWQcuX"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                >
+                  <svg className="h-3.5 w-3.5 text-indigo-400" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.08.114 18.1.135 18.11a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+                  </svg>
+                  <span>Discord Server</span>
+                  <ExternalLink className="h-3 w-3 opacity-60" />
+                </a>
+              </li>
+              <li>
+                <Link href="/giveaways" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
+                  <Gift className="h-3.5 w-3.5 text-primary" />
+                  <span>Giveaways</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/leaderboard" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
+                  <Trophy className="h-3.5 w-3.5 text-yellow-500" />
+                  <span>Leaderboard</span>
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
-      )}
-      <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Steam Family
+
+        {/* Social Bar & Highlights */}
+        <div className="border-t border-border pt-8 pb-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mr-1">
+              Follow Us
+            </span>
+            <a
+              href="https://t.me/Steam_Family"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2.5 rounded-xl border border-border bg-card hover:bg-secondary hover:text-blue-400 transition-colors"
+              title="Telegram"
+            >
+              <Send className="h-4 w-4" />
+            </a>
+            <a
+              href="https://discord.gg/3w69MWQcuX"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2.5 rounded-xl border border-border bg-card hover:bg-secondary hover:text-indigo-400 transition-colors"
+              title="Discord"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.08.114 18.1.135 18.11a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+              </svg>
+            </a>
+            <a
+              href="mailto:contact@steamfamily.xyz"
+              className="p-2.5 rounded-xl border border-border bg-card hover:bg-secondary hover:text-emerald-400 transition-colors"
+              title="Email Us"
+            >
+              <Mail className="h-4 w-4" />
+            </a>
+            <a
+              href="https://linktr.ee/mehdibld"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2.5 rounded-xl border border-border bg-card hover:bg-secondary hover:text-blue-400 transition-colors"
+              title="Advertise with us"
+            >
+              <Megaphone className="h-4 w-4" />
+            </a>
+            <Link href="/premium">
+              <button
+                className="p-2.5 rounded-xl border border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 transition-colors"
+                title="Buy Pro"
+              >
+                <Crown className="h-4 w-4" />
+              </button>
+            </Link>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+            <Link href="/terms" className="hover:text-foreground transition-colors">
+              Terms & Rules
+            </Link>
+            <Link href="/faq" className="hover:text-foreground transition-colors">
+              FAQ
+            </Link>
+            <Link href="/premium" className="hover:text-foreground transition-colors">
+              Buy Pro
+            </Link>
+            <a href="mailto:contact@steamfamily.xyz" className="hover:text-foreground transition-colors">
+              contact@steamfamily.xyz
+            </a>
+          </div>
+        </div>
+
+        {/* Bottom copyright line */}
+        <div className="border-t border-border pt-6 text-center text-xs text-muted-foreground">
+          © {new Date().getFullYear()} Steam Family. All rights reserved.
+        </div>
       </div>
     </footer>
   );

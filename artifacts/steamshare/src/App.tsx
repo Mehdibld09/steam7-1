@@ -28,6 +28,8 @@ const EditProfile = lazy(() => import("./pages/edit-profile"));
 const Store = lazy(() => import("./pages/store"));
 const ProductDetail = lazy(() => import("./pages/product-detail"));
 const Premium = lazy(() => import("./pages/premium"));
+const FAQ = lazy(() => import("./pages/faq"));
+const Terms = lazy(() => import("./pages/terms"));
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -149,6 +151,10 @@ function Router() {
         <Route path="/messages" component={Messages} />
         <Route path="/edit-profile" component={EditProfile} />
         <Route path="/premium" component={Premium} />
+        <Route path="/faq" component={FAQ} />
+        <Route path="/terms" component={Terms} />
+        <Route path="/rules" component={Terms} />
+        <Route path="/privacy" component={Terms} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>

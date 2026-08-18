@@ -249,6 +249,7 @@ export default function Premium() {
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Everything in Premium, plus</p>
               <ul className="space-y-2">
+                <FeatureItem icon={<Coins className="h-4 w-4 text-yellow-400" />} text="You get 1,000 points" />
                 <FeatureItem icon={<Award className="h-4 w-4 text-blue-400" />} text="8 badges to choose from + custom badge" />
                 <FeatureItem icon={<Sparkles className="h-4 w-4 text-purple-400" />} text={<span className="aurora-text">Animated name colors</span>} />
                 <FeatureItem icon={<ThumbsUp className="h-4 w-4 text-blue-400" />} text="Bypass like restrictions" />

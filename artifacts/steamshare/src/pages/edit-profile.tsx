@@ -35,17 +35,17 @@ const BASIC_COLORS = [
   { hex: "#ffffff", label: "White", animated: false },
   { hex: "#94a3b8", label: "Silver", animated: false },
   { hex: "rainbow", label: "Rainbow", animated: true, proOnly: true },
-  { hex: "fire", label: "Fire 🔥", animated: true, proOnly: true },
-  { hex: "ocean", label: "Ocean 🌊", animated: true, proOnly: true },
-  { hex: "galaxy", label: "Galaxy 🌌", animated: true, proOnly: true },
-  { hex: "neon", label: "Neon ⚡", animated: true, proOnly: true },
-  { hex: "gold", label: "Gold ✨", animated: true, proOnly: true },
-  { hex: "aurora", label: "Aurora 🌌", animated: true, proOnly: true },
-  { hex: "sunset", label: "Sunset 🌅", animated: true, proOnly: true },
-  { hex: "ice", label: "Ice 🧊", animated: true, proOnly: true },
-  { hex: "toxic", label: "Toxic ☢️", animated: true, proOnly: true },
-  { hex: "rose", label: "Rose 🌹", animated: true, proOnly: true },
-  { hex: "lava", label: "Lava 🌋", animated: true, proOnly: true },
+  { hex: "fire", label: "Fire", animated: true, proOnly: true },
+  { hex: "ocean", label: "Ocean", animated: true, proOnly: true },
+  { hex: "galaxy", label: "Galaxy", animated: true, proOnly: true },
+  { hex: "neon", label: "Neon", animated: true, proOnly: true },
+  { hex: "gold", label: "Gold", animated: true, proOnly: true },
+  { hex: "aurora", label: "Aurora", animated: true, proOnly: true },
+  { hex: "sunset", label: "Sunset", animated: true, proOnly: true },
+  { hex: "ice", label: "Ice", animated: true, proOnly: true },
+  { hex: "toxic", label: "Toxic", animated: true, proOnly: true },
+  { hex: "rose", label: "Rose", animated: true, proOnly: true },
+  { hex: "lava", label: "Lava", animated: true, proOnly: true },
 ];
 
 function TwoFactorCard() {
@@ -136,6 +136,8 @@ export default function EditProfile() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const [activeTab, setActiveTab] = useState<"customization" | "security">("customization");
+
   // Display name
   const [displayName, setDisplayName] = useState("");
   const [displayNameLoading, setDisplayNameLoading] = useState(false);
@@ -155,6 +157,8 @@ export default function EditProfile() {
   // Delete account
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
+  const [deleteCode, setDeleteCode] = useState("");
+  const [deleteCodeSent, setDeleteCodeSent] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Premium prefs
@@ -324,27 +328,61 @@ export default function EditProfile() {
     }
   };
 
-  const handleDeleteAccount = async () => {
+  const handleDeleteAccountRequest = async () => {
+    if (!deletePassword) return;
     setDeleteLoading(true);
     try {
-      const res = await fetch("/api/auth/account", {
-        method: "DELETE",
+      const res = await fetch("/api/auth/account/delete/request", {
+        method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: deletePassword }),
       });
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}));
-        throw new Error(e.error || "Failed to delete account");
-      }
-      queryClient.clear();
-      setLocation("/");
-      toast({ title: "Account deleted" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to request account deletion");
+      setDeleteCodeSent(true);
+      toast({
+        title: "Confirmation code sent",
+        description: "Check your email for the 6-digit code to delete your account.",
+      });
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {
       setDeleteLoading(false);
     }
+  };
+
+  const handleDeleteAccountConfirm = async () => {
+    if (!/^\d{6}$/.test(deleteCode.trim())) {
+      toast({ title: "Enter the 6-digit code", variant: "destructive" });
+      return;
+    }
+    setDeleteLoading(true);
+    try {
+      const res = await fetch("/api/auth/account/delete/confirm", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: deleteCode.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to delete account");
+      queryClient.clear();
+      setDeleteOpen(false);
+      setLocation("/");
+      toast({ title: "Account deleted successfully" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleResetDeleteDialog = () => {
+    setDeleteOpen(false);
+    setDeletePassword("");
+    setDeleteCode("");
+    setDeleteCodeSent(false);
   };
 
   const handlePremiumPref = async (patch: { nameColor?: string | null; badgeType?: string | null; badgeIconUrl?: string | null; badgeIconLink?: string | null }) => {
@@ -383,509 +421,584 @@ export default function EditProfile() {
         </button>
         <h1 className="text-2xl font-black">Edit Profile</h1>
 
-        {/* ── Display Name ── */}
-        <div className="bg-card border border-border rounded-xl p-6 space-y-5">
-          <h2 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide text-muted-foreground">
-            <User className="h-4 w-4" /> Display Name
-          </h2>
-          <p className="text-xs text-muted-foreground -mt-2">
-            This is the name others see on your profile. Your login username (<strong className="text-foreground">{me.username}</strong>) stays the same.
-          </p>
-          <div className="space-y-2">
-            <Input
-              placeholder={currentDisplayName || "Enter a display name…"}
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              maxLength={30}
-              className={isBadWord ? "border-destructive focus:border-destructive" : ""}
-            />
-            {isBadWord && (
-              <p className="text-xs text-destructive flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" /> This name contains inappropriate content.
-              </p>
-            )}
-            {displayedDisplayName && !isBadWord && (
-              <p className="text-xs text-muted-foreground">Preview: <span className="text-foreground font-medium">{displayedDisplayName}</span></p>
-            )}
-          </div>
-          <Button
-            onClick={handleDisplayNameSave}
-            disabled={!displayName.trim() || isBadWord || displayNameLoading}
-            className="w-full"
+        {/* ── Tabs: Customization vs Security ── */}
+        <div className="grid grid-cols-2 p-1 bg-muted/60 rounded-xl border border-border">
+          <button
+            type="button"
+            onClick={() => setActiveTab("customization")}
+            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === "customization"
+                ? "bg-card text-foreground shadow-sm border border-border/60"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
           >
-            {displayNameLoading ? "Saving…" : "Save Display Name"}
-          </Button>
+            <Palette className="h-4 w-4" />
+            <span>Customization</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("security")}
+            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === "security"
+                ? "bg-card text-foreground shadow-sm border border-border/60"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <ShieldCheck className="h-4 w-4" />
+            <span>Security</span>
+          </button>
         </div>
 
-        {/* ── Avatar ── */}
-        <div className="bg-card border border-border rounded-xl p-6 space-y-5">
-          <h2 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide text-muted-foreground">
-            <Camera className="h-4 w-4" /> Profile Picture
-          </h2>
-
-          <div className="flex items-center gap-5">
-            <Avatar className="h-20 w-20 border-2 border-border shrink-0">
-              <AvatarImage src={previewUrl} />
-              <AvatarFallback className="text-2xl bg-secondary">
-                {(me.username?.substring(0, 2) ?? "").toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 space-y-2">
-              <p className="text-xs text-muted-foreground">Paste an image URL to set your profile picture.</p>
-              <Input
-                placeholder="https://example.com/avatar.jpg"
-                value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              onClick={handleAvatarSave}
-              disabled={!avatarUrl || avatarLoading}
-              className="flex-1"
-            >
-              {avatarLoading ? "Saving..." : "Save Picture"}
-            </Button>
-            {me.avatarUrl && (
-              <Button
-                variant="outline"
-                onClick={handleRemoveAvatar}
-                disabled={avatarLoading}
-                className="text-destructive border-destructive/30 hover:bg-destructive/10"
-              >
-                Remove
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* ── Premium Customization ── */}
-        {isPremium ? (
-          <div className="bg-card border border-yellow-500/30 rounded-xl p-6 space-y-5">
-            <h2 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide text-yellow-400">
-              <Crown className="h-4 w-4" /> Premium Customization
-            </h2>
-            <p className="text-xs text-muted-foreground -mt-2">
-              Customize your badge and name color. Changes appear on all your posts and comments.
-              {premiumStatus?.expiresAt && (
-                <span> Subscription expires <strong className="text-foreground">{new Date(premiumStatus.expiresAt).toLocaleDateString()}</strong>.</span>
-              )}
-            </p>
-
-            {/* Name Color */}
-            <div className="space-y-3">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <Palette className="h-4 w-4" /> Name Color
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {BASIC_COLORS.map((c) => {
-                  const isProOnly = c.animated && !isPro;
-                  const isSelected = premiumStatus?.nameColor === c.hex;
-                  const swatchClass = c.hex === "rainbow" ? "rainbow-swatch"
-                    : c.hex === "fire" ? "fire-swatch"
-                    : c.hex === "ocean" ? "ocean-swatch"
-                    : c.hex === "galaxy" ? "galaxy-swatch"
-                    : c.hex === "neon" ? "neon-swatch"
-                    : c.hex === "gold" ? "gold-swatch"
-                    : c.hex === "aurora" ? "aurora-swatch"
-                    : c.hex === "sunset" ? "sunset-swatch"
-                    : c.hex === "ice" ? "ice-swatch"
-                    : c.hex === "toxic" ? "toxic-swatch"
-                    : c.hex === "rose" ? "rose-swatch"
-                    : c.hex === "lava" ? "lava-swatch"
-                    : "";
-                  return (
-                    <button
-                      key={c.hex}
-                      title={isProOnly ? `${c.label} — Pro only` : c.label}
-                      onClick={() => !isProOnly && handlePremiumPref({ nameColor: c.hex })}
-                      disabled={prefLoading || isProOnly}
-                      className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${isProOnly ? "opacity-30 cursor-not-allowed" : ""} ${swatchClass}`}
-                      style={c.animated ? {
-                        borderColor: isSelected ? "#fff" : "transparent",
-                        boxShadow: isSelected ? "0 0 0 2px rgba(255,255,255,0.5)" : undefined,
-                      } : {
-                        backgroundColor: c.hex,
-                        borderColor: isSelected ? "#fff" : "transparent",
-                        boxShadow: isSelected ? "0 0 0 2px rgba(255,255,255,0.5)" : undefined,
-                      }}
-                    />
-                  );
-                })}
-                {premiumStatus?.nameColor && (
-                  <button
-                    onClick={() => handlePremiumPref({ nameColor: null })}
-                    disabled={prefLoading}
-                    className="w-8 h-8 rounded-full border-2 border-border text-muted-foreground hover:text-foreground flex items-center justify-center text-xs transition-colors"
-                    title="Remove color"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-              {premiumStatus?.nameColor && (
-                <p className="text-xs text-muted-foreground">
-                  Preview:{" "}
-                  {premiumStatus.nameColor === "rainbow" ? (
-                    <span className="rainbow-text font-semibold">{me.username}</span>
-                  ) : premiumStatus.nameColor === "fire" ? (
-                    <span className="fire-text font-semibold">{me.username}</span>
-                  ) : premiumStatus.nameColor === "ocean" ? (
-                    <span className="ocean-text font-semibold">{me.username}</span>
-                  ) : premiumStatus.nameColor === "galaxy" ? (
-                    <span className="galaxy-text font-semibold">{me.username}</span>
-                  ) : premiumStatus.nameColor === "neon" ? (
-                    <span className="neon-text font-semibold">{me.username}</span>
-                  ) : premiumStatus.nameColor === "gold" ? (
-                    <span className="gold-text font-semibold">{me.username}</span>
-                  ) : premiumStatus.nameColor === "aurora" ? (
-                    <span className="aurora-text font-semibold">{me.username}</span>
-                  ) : premiumStatus.nameColor === "sunset" ? (
-                    <span className="sunset-text font-semibold">{me.username}</span>
-                  ) : premiumStatus.nameColor === "ice" ? (
-                    <span className="ice-text font-semibold">{me.username}</span>
-                  ) : premiumStatus.nameColor === "toxic" ? (
-                    <span className="toxic-text font-semibold">{me.username}</span>
-                  ) : premiumStatus.nameColor === "rose" ? (
-                    <span className="rose-text font-semibold">{me.username}</span>
-                  ) : premiumStatus.nameColor === "lava" ? (
-                    <span className="lava-text font-semibold">{me.username}</span>
-                  ) : (
-                    <span style={{ color: premiumStatus.nameColor }} className="font-semibold">{me.username}</span>
-                  )}
-                </p>
-              )}
-            </div>
-
-            {/* Badge */}
-            <div className="space-y-3">
-              <label className="text-sm font-medium">Badge</label>
-              <div className="flex flex-wrap gap-2">
-                {BADGE_OPTIONS.map((opt) => {
-                  const isProRequired = opt.pro && !isPro;
-                  const isSelected = premiumStatus?.badgeType === opt.key;
-                  return (
-                    <button
-                      key={opt.key}
-                      title={isProRequired ? `${opt.label} requires Pro` : opt.label}
-                      onClick={() => !isProRequired && handlePremiumPref({ badgeType: opt.key })}
-                      disabled={prefLoading || isProRequired}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all
-                        ${isSelected ? "border-yellow-500 bg-yellow-500/10 text-yellow-300" : "border-border hover:border-yellow-500/40"}
-                        ${isProRequired ? "opacity-40 cursor-not-allowed" : ""}
-                      `}
-                    >
-                      <UserBadge badgeType={opt.key} size={15} />
-                      <span>{opt.label}</span>
-                      {opt.pro && <span className="text-[9px] text-blue-400 font-bold ml-0.5">PRO</span>}
-                    </button>
-                  );
-                })}
-                {premiumStatus?.badgeType && (
-                  <button
-                    onClick={() => handlePremiumPref({ badgeType: null })}
-                    disabled={prefLoading}
-                    className="px-3 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Custom Icon Badge — Pro only */}
-            <div className={`space-y-3 border-t border-border pt-4 ${!isPro ? "opacity-30 pointer-events-none select-none" : ""}`}>
-              <label className="text-sm font-medium flex items-center gap-2">
-                <ImageIcon className="h-4 w-4 text-blue-400" />
-                Custom Icon Badge
-                <span className="text-[9px] text-blue-400 font-bold bg-blue-400/10 border border-blue-400/30 rounded-full px-2 py-0.5">PRO</span>
-              </label>
-              <p className="text-xs text-muted-foreground -mt-1">
-                Show a custom image as your badge. Paste any image URL — it appears next to your name on your profile.
+        {activeTab === "customization" ? (
+          <>
+            {/* ── Display Name ── */}
+            <div className="bg-card border border-border rounded-xl p-6 space-y-5">
+              <h2 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide text-muted-foreground">
+                <User className="h-4 w-4" /> Display Name
+              </h2>
+              <p className="text-xs text-muted-foreground -mt-2">
+                This is the name others see on your profile. Your login username (<strong className="text-foreground">{me.username}</strong>) stays the same.
               </p>
-
-              {isPro && premiumStatus?.badgeIconUrl && (
-                <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
-                  <UserBadge
-                    badgeIconUrl={premiumStatus.badgeIconUrl}
-                    badgeIconLink={premiumStatus.badgeIconLink ?? undefined}
-                    size={28}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{premiumStatus.badgeIconUrl}</p>
-                    {premiumStatus.badgeIconLink && (
-                      <p className="text-[10px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
-                        <Link2 className="h-3 w-3" />{premiumStatus.badgeIconLink}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handlePremiumPref({ badgeIconUrl: null })}
-                    disabled={prefLoading}
-                    className="text-xs text-destructive hover:text-destructive/80 shrink-0"
-                  >
-                    Remove
-                  </button>
-                </div>
-              )}
-
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                <Input
+                  placeholder={currentDisplayName || "Enter a display name…"}
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  maxLength={30}
+                  className={isBadWord ? "border-destructive focus:border-destructive" : ""}
+                />
+                {isBadWord && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" /> This name contains inappropriate content.
+                  </p>
+                )}
+                {displayedDisplayName && !isBadWord && (
+                  <p className="text-xs text-muted-foreground">Preview: <span className="text-foreground font-medium">{displayedDisplayName}</span></p>
+                )}
+              </div>
+              <Button
+                onClick={handleDisplayNameSave}
+                disabled={!displayName.trim() || isBadWord || displayNameLoading}
+                className="w-full"
+              >
+                {displayNameLoading ? "Saving…" : "Save Display Name"}
+              </Button>
+            </div>
+
+            {/* ── Avatar ── */}
+            <div className="bg-card border border-border rounded-xl p-6 space-y-5">
+              <h2 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide text-muted-foreground">
+                <Camera className="h-4 w-4" /> Profile Picture
+              </h2>
+
+              <div className="flex items-center gap-5">
+                <Avatar className="h-20 w-20 border-2 border-border shrink-0">
+                  <AvatarImage src={previewUrl} />
+                  <AvatarFallback className="text-2xl bg-secondary">
+                    {(me.username?.substring(0, 2) ?? "").toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-2">
+                  <p className="text-xs text-muted-foreground">Paste an image URL to set your profile picture.</p>
                   <Input
-                    placeholder="https://example.com/icon.png"
-                    value={badgeIconUrl}
-                    onChange={(e) => setBadgeIconUrl(e.target.value)}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <Input
-                    placeholder="https://example.com (optional link)"
-                    value={badgeIconLink}
-                    onChange={(e) => setBadgeIconLink(e.target.value)}
+                    placeholder="https://example.com/avatar.jpg"
+                    value={avatarUrl}
+                    onChange={(e) => setAvatarUrl(e.target.value)}
                   />
                 </div>
               </div>
 
               <div className="flex gap-2">
                 <Button
-                  onClick={() => {
-                    if (!badgeIconUrl.trim()) return;
-                    handlePremiumPref({
-                      badgeIconUrl: badgeIconUrl.trim(),
-                      badgeIconLink: badgeIconLink.trim() || null,
-                    });
-                    setBadgeIconUrl("");
-                    setBadgeIconLink("");
-                  }}
-                  disabled={!badgeIconUrl.trim() || prefLoading}
-                  size="sm"
+                  onClick={handleAvatarSave}
+                  disabled={!avatarUrl || avatarLoading}
+                  className="flex-1"
                 >
-                  {prefLoading ? "Saving…" : "Save Icon Badge"}
+                  {avatarLoading ? "Saving..." : "Save Picture"}
                 </Button>
-              </div>
-            </div>
-            {!isPro && (
-              <div className="border-t border-border pt-4">
-                <Link href="/premium" className="block">
-                  <Button variant="outline" size="sm" className="w-full border-blue-500/30 text-blue-400 hover:bg-blue-500/10">
-                    <Crown className="h-3.5 w-3.5 mr-2" /> Upgrade to Pro to unlock animated colors & custom badge
+                {me.avatarUrl && (
+                  <Button
+                    variant="outline"
+                    onClick={handleRemoveAvatar}
+                    disabled={avatarLoading}
+                    className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                  >
+                    Remove
                   </Button>
-                </Link>
+                )}
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="bg-card border border-yellow-500/20 rounded-xl p-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide text-yellow-400">
-                <Crown className="h-4 w-4" /> Premium Customization
-              </h2>
-              <span className="text-[10px] bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 rounded-full px-2 py-0.5 font-bold flex items-center gap-1">
-                <Lock className="h-3 w-3" /> Locked
-              </span>
             </div>
-            <p className="text-xs text-muted-foreground -mt-2">
-              Upgrade to Premium or Pro to unlock these customizations.
-            </p>
 
-            {/* Faded preview — non-interactive */}
-            <div className="opacity-40 pointer-events-none select-none space-y-5">
-              {/* Name Color preview */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <Palette className="h-4 w-4" /> Name Color
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {BASIC_COLORS.filter(c => !c.animated).map((c) => (
-                    <div
-                      key={c.hex}
-                      className="w-8 h-8 rounded-full border-2 border-transparent"
-                      style={{ backgroundColor: c.hex }}
-                    />
-                  ))}
-                  {BASIC_COLORS.filter(c => c.animated).map((c) => (
-                    <div
-                      key={c.hex}
-                      className={`w-8 h-8 rounded-full border-2 border-transparent ${
-                        c.hex === "rainbow" ? "rainbow-swatch"
+            {/* ── Premium Customization ── */}
+            {isPremium ? (
+              <div className="bg-card border border-yellow-500/30 rounded-xl p-6 space-y-5">
+                <h2 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide text-yellow-400">
+                  <Crown className="h-4 w-4" /> Premium Customization
+                </h2>
+                <p className="text-xs text-muted-foreground -mt-2">
+                  Customize your badge and name color. Changes appear on all your posts and comments.
+                  {premiumStatus?.expiresAt && (
+                    <span> Subscription expires <strong className="text-foreground">{new Date(premiumStatus.expiresAt).toLocaleDateString()}</strong>.</span>
+                  )}
+                </p>
+
+                {/* Name Color */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Palette className="h-4 w-4" /> Name Color
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {BASIC_COLORS.map((c) => {
+                      const isProOnly = c.animated && !isPro;
+                      const isSelected = premiumStatus?.nameColor === c.hex;
+                      const swatchClass = c.hex === "rainbow" ? "rainbow-swatch"
                         : c.hex === "fire" ? "fire-swatch"
                         : c.hex === "ocean" ? "ocean-swatch"
                         : c.hex === "galaxy" ? "galaxy-swatch"
                         : c.hex === "neon" ? "neon-swatch"
                         : c.hex === "gold" ? "gold-swatch"
-                        : ""
-                      }`}
-                    />
-                  ))}
+                        : c.hex === "aurora" ? "aurora-swatch"
+                        : c.hex === "sunset" ? "sunset-swatch"
+                        : c.hex === "ice" ? "ice-swatch"
+                        : c.hex === "toxic" ? "toxic-swatch"
+                        : c.hex === "rose" ? "rose-swatch"
+                        : c.hex === "lava" ? "lava-swatch"
+                        : "";
+                      return (
+                        <button
+                          key={c.hex}
+                          title={isProOnly ? `${c.label} — Pro only` : c.label}
+                          onClick={() => !isProOnly && handlePremiumPref({ nameColor: c.hex })}
+                          disabled={prefLoading || isProOnly}
+                          className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${isProOnly ? "opacity-30 cursor-not-allowed" : ""} ${swatchClass}`}
+                          style={c.animated ? {
+                            borderColor: isSelected ? "#fff" : "transparent",
+                            boxShadow: isSelected ? "0 0 0 2px rgba(255,255,255,0.5)" : undefined,
+                          } : {
+                            backgroundColor: c.hex,
+                            borderColor: isSelected ? "#fff" : "transparent",
+                            boxShadow: isSelected ? "0 0 0 2px rgba(255,255,255,0.5)" : undefined,
+                          }}
+                        />
+                      );
+                    })}
+                    {premiumStatus?.nameColor && (
+                      <button
+                        onClick={() => handlePremiumPref({ nameColor: null })}
+                        disabled={prefLoading}
+                        className="w-8 h-8 rounded-full border-2 border-border text-muted-foreground hover:text-foreground flex items-center justify-center text-xs transition-colors"
+                        title="Remove color"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  {premiumStatus?.nameColor && (
+                    <p className="text-xs text-muted-foreground">
+                      Preview:{" "}
+                      {premiumStatus.nameColor === "rainbow" ? (
+                        <span className="rainbow-text font-semibold">{me.username}</span>
+                      ) : premiumStatus.nameColor === "fire" ? (
+                        <span className="fire-text font-semibold">{me.username}</span>
+                      ) : premiumStatus.nameColor === "ocean" ? (
+                        <span className="ocean-text font-semibold">{me.username}</span>
+                      ) : premiumStatus.nameColor === "galaxy" ? (
+                        <span className="galaxy-text font-semibold">{me.username}</span>
+                      ) : premiumStatus.nameColor === "neon" ? (
+                        <span className="neon-text font-semibold">{me.username}</span>
+                      ) : premiumStatus.nameColor === "gold" ? (
+                        <span className="gold-text font-semibold">{me.username}</span>
+                      ) : premiumStatus.nameColor === "aurora" ? (
+                        <span className="aurora-text font-semibold">{me.username}</span>
+                      ) : premiumStatus.nameColor === "sunset" ? (
+                        <span className="sunset-text font-semibold">{me.username}</span>
+                      ) : premiumStatus.nameColor === "ice" ? (
+                        <span className="ice-text font-semibold">{me.username}</span>
+                      ) : premiumStatus.nameColor === "toxic" ? (
+                        <span className="toxic-text font-semibold">{me.username}</span>
+                      ) : premiumStatus.nameColor === "rose" ? (
+                        <span className="rose-text font-semibold">{me.username}</span>
+                      ) : premiumStatus.nameColor === "lava" ? (
+                        <span className="lava-text font-semibold">{me.username}</span>
+                      ) : (
+                        <span style={{ color: premiumStatus.nameColor }} className="font-semibold">{me.username}</span>
+                      )}
+                    </p>
+                  )}
                 </div>
-              </div>
 
-              {/* Badge preview */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Badge</label>
-                <div className="flex flex-wrap gap-2">
-                  {BADGE_OPTIONS.map((opt) => (
-                    <div
-                      key={opt.key}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm"
-                    >
-                      <UserBadge badgeType={opt.key} size={15} />
-                      <span>{opt.label}</span>
-                      {opt.pro && <span className="text-[9px] text-blue-400 font-bold ml-0.5">PRO</span>}
+                {/* Badge */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">Badge</label>
+                  <div className="flex flex-wrap gap-2">
+                    {BADGE_OPTIONS.map((opt) => {
+                      const isProRequired = opt.pro && !isPro;
+                      const isSelected = premiumStatus?.badgeType === opt.key;
+                      return (
+                        <button
+                          key={opt.key}
+                          title={isProRequired ? `${opt.label} requires Pro` : opt.label}
+                          onClick={() => !isProRequired && handlePremiumPref({ badgeType: opt.key })}
+                          disabled={prefLoading || isProRequired}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all
+                            ${isSelected ? "border-yellow-500 bg-yellow-500/10 text-yellow-300" : "border-border hover:border-yellow-500/40"}
+                            ${isProRequired ? "opacity-40 cursor-not-allowed" : ""}
+                          `}
+                        >
+                          <UserBadge badgeType={opt.key} size={15} />
+                          <span>{opt.label}</span>
+                          {opt.pro && <span className="text-[9px] text-blue-400 font-bold ml-0.5">PRO</span>}
+                        </button>
+                      );
+                    })}
+                    {premiumStatus?.badgeType && (
+                      <button
+                        onClick={() => handlePremiumPref({ badgeType: null })}
+                        disabled={prefLoading}
+                        className="px-3 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Custom Icon Badge — Pro only */}
+                <div className={`space-y-3 border-t border-border pt-4 ${!isPro ? "opacity-30 pointer-events-none select-none" : ""}`}>
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4 text-blue-400" />
+                    Custom Icon Badge
+                    <span className="text-[9px] text-blue-400 font-bold bg-blue-400/10 border border-blue-400/30 rounded-full px-2 py-0.5">PRO</span>
+                  </label>
+                  <p className="text-xs text-muted-foreground -mt-1">
+                    Show a custom image as your badge. Paste any image URL — it appears next to your name on your profile.
+                  </p>
+
+                  {isPro && premiumStatus?.badgeIconUrl && (
+                    <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+                      <UserBadge
+                        badgeIconUrl={premiumStatus.badgeIconUrl}
+                        badgeIconLink={premiumStatus.badgeIconLink ?? undefined}
+                        size={28}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{premiumStatus.badgeIconUrl}</p>
+                        {premiumStatus.badgeIconLink && (
+                          <p className="text-[10px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+                            <Link2 className="h-3 w-3" />{premiumStatus.badgeIconLink}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handlePremiumPref({ badgeIconUrl: null })}
+                        disabled={prefLoading}
+                        className="text-xs text-destructive hover:text-destructive/80 shrink-0"
+                      >
+                        Remove
+                      </button>
                     </div>
-                  ))}
+                  )}
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <Input
+                        placeholder="https://example.com/icon.png"
+                        value={badgeIconUrl}
+                        onChange={(e) => setBadgeIconUrl(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <Input
+                        placeholder="https://example.com (optional link)"
+                        value={badgeIconLink}
+                        onChange={(e) => setBadgeIconLink(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        if (!badgeIconUrl.trim()) return;
+                        handlePremiumPref({
+                          badgeIconUrl: badgeIconUrl.trim(),
+                          badgeIconLink: badgeIconLink.trim() || null,
+                        });
+                        setBadgeIconUrl("");
+                        setBadgeIconLink("");
+                      }}
+                      disabled={!badgeIconUrl.trim() || prefLoading}
+                      size="sm"
+                    >
+                      {prefLoading ? "Saving…" : "Save Icon Badge"}
+                    </Button>
+                  </div>
+                </div>
+                {!isPro && (
+                  <div className="border-t border-border pt-4">
+                    <Link href="/premium" className="block">
+                      <Button variant="outline" size="sm" className="w-full border-blue-500/30 text-blue-400 hover:bg-blue-500/10">
+                        <Crown className="h-3.5 w-3.5 mr-2" /> Upgrade to Pro to unlock animated colors & custom badge
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-card border border-yellow-500/20 rounded-xl p-6 space-y-5">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide text-yellow-400">
+                    <Crown className="h-4 w-4" /> Premium Customization
+                  </h2>
+                  <span className="text-[10px] bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 rounded-full px-2 py-0.5 font-bold flex items-center gap-1">
+                    <Lock className="h-3 w-3" /> Locked
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground -mt-2">
+                  Upgrade to Premium or Pro to unlock these customizations.
+                </p>
+
+                {/* Faded preview — non-interactive */}
+                <div className="opacity-40 pointer-events-none select-none space-y-5">
+                  {/* Name Color preview */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Palette className="h-4 w-4" /> Name Color
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {BASIC_COLORS.filter(c => !c.animated).map((c) => (
+                        <div
+                          key={c.hex}
+                          className="w-8 h-8 rounded-full border-2 border-transparent"
+                          style={{ backgroundColor: c.hex }}
+                        />
+                      ))}
+                      {BASIC_COLORS.filter(c => c.animated).map((c) => (
+                        <div
+                          key={c.hex}
+                          className={`w-8 h-8 rounded-full border-2 border-transparent ${
+                            c.hex === "rainbow" ? "rainbow-swatch"
+                            : c.hex === "fire" ? "fire-swatch"
+                            : c.hex === "ocean" ? "ocean-swatch"
+                            : c.hex === "galaxy" ? "galaxy-swatch"
+                            : c.hex === "neon" ? "neon-swatch"
+                            : c.hex === "gold" ? "gold-swatch"
+                            : ""
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Badge preview */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">Badge</label>
+                    <div className="flex flex-wrap gap-2">
+                      {BADGE_OPTIONS.map((opt) => (
+                        <div
+                          key={opt.key}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm"
+                        >
+                          <UserBadge badgeType={opt.key} size={15} />
+                          <span>{opt.label}</span>
+                          {opt.pro && <span className="text-[9px] text-blue-400 font-bold ml-0.5">PRO</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <Link href="/premium" className="block">
+                  <Button className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold">
+                    <Crown className="h-4 w-4 mr-2" /> Get Premium to Unlock
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* ── Change Password ── */}
+            <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+              <h2 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide text-muted-foreground">
+                <Lock className="h-4 w-4" /> Change Password
+              </h2>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium block mb-1">Current Password</label>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">New Password</label>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">Confirm New Password</label>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                  {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                    <p className="text-xs text-destructive mt-1">Passwords don't match</p>
+                  )}
+                  {newPassword && confirmPassword && newPassword === confirmPassword && (
+                    <p className="text-xs text-green-500 mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Passwords match</p>
+                  )}
                 </div>
               </div>
-            </div>
 
-            <Link href="/premium" className="block">
-              <Button className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold">
-                <Crown className="h-4 w-4 mr-2" /> Get Premium to Unlock
-              </Button>
-            </Link>
-          </div>
-        )}
-
-        {/* ── Change Password ── */}
-        <div className="bg-card border border-border rounded-xl p-6 space-y-4">
-          <h2 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide text-muted-foreground">
-            <Lock className="h-4 w-4" /> Change Password
-          </h2>
-
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium block mb-1">Current Password</label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium block mb-1">New Password</label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium block mb-1">Confirm New Password</label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-              {newPassword && confirmPassword && newPassword !== confirmPassword && (
-                <p className="text-xs text-destructive mt-1">Passwords don't match</p>
-              )}
-              {newPassword && confirmPassword && newPassword === confirmPassword && (
-                <p className="text-xs text-green-500 mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Passwords match</p>
+              {!passwordCodeSent ? (
+                <Button
+                  onClick={handlePasswordChange}
+                  disabled={!currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword || passwordLoading}
+                  className="w-full"
+                >
+                  {passwordLoading ? "Sending code..." : "Send confirmation code"}
+                </Button>
+              ) : (
+                <div className="space-y-3 border-t border-border pt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Enter the 6-digit code sent to your email to finish changing your password.
+                  </p>
+                  <Input
+                    value={passwordCode}
+                    onChange={(e) => setPasswordCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    onKeyDown={(e) => { if (e.key === "Enter") handlePasswordCodeConfirm(); }}
+                    placeholder="000000"
+                    inputMode="numeric"
+                    maxLength={6}
+                    className="h-12 text-center text-2xl font-mono tracking-widest"
+                    autoFocus
+                  />
+                  <Button
+                    onClick={handlePasswordCodeConfirm}
+                    disabled={passwordCode.length !== 6 || passwordLoading}
+                    className="w-full"
+                  >
+                    {passwordLoading ? "Confirming..." : "Confirm password change"}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => { setPasswordCodeSent(false); setPasswordCode(""); }}
+                    className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Start over
+                  </button>
+                </div>
               )}
             </div>
-          </div>
 
-          {!passwordCodeSent ? (
-            <Button
-              onClick={handlePasswordChange}
-              disabled={!currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword || passwordLoading}
-              className="w-full"
-            >
-              {passwordLoading ? "Sending code..." : "Send confirmation code"}
-            </Button>
-          ) : (
-            <div className="space-y-3 border-t border-border pt-4">
+            {/* ── Two-Factor Authentication ── */}
+            <TwoFactorCard />
+
+            {/* ── Danger Zone ── */}
+            <div className="bg-card border border-destructive/30 rounded-xl p-6 space-y-3">
+              <h2 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide text-destructive">
+                <AlertTriangle className="h-4 w-4" /> Danger Zone
+              </h2>
               <p className="text-sm text-muted-foreground">
-                Enter the 6-digit code sent to your email to finish changing your password.
+                Permanently delete your account and all data. This cannot be undone.
               </p>
-              <Input
-                value={passwordCode}
-                onChange={(e) => setPasswordCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                onKeyDown={(e) => { if (e.key === "Enter") handlePasswordCodeConfirm(); }}
-                placeholder="000000"
-                inputMode="numeric"
-                maxLength={6}
-                className="h-12 text-center text-2xl font-mono tracking-widest"
-                autoFocus
-              />
               <Button
-                onClick={handlePasswordCodeConfirm}
-                disabled={passwordCode.length !== 6 || passwordLoading}
-                className="w-full"
+                variant="outline"
+                className="w-full border-destructive/40 text-destructive hover:bg-destructive/10"
+                onClick={() => setDeleteOpen(true)}
               >
-                {passwordLoading ? "Confirming..." : "Confirm password change"}
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete My Account
               </Button>
-              <button
-                type="button"
-                onClick={() => { setPasswordCodeSent(false); setPasswordCode(""); }}
-                className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Start over
-              </button>
             </div>
-          )}
-        </div>
-
-        {/* ── Two-Factor Authentication ── */}
-        <TwoFactorCard />
-
-        {/* ── Danger Zone ── */}
-        <div className="bg-card border border-destructive/30 rounded-xl p-6 space-y-3">
-          <h2 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wide text-destructive">
-            <AlertTriangle className="h-4 w-4" /> Danger Zone
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Permanently delete your account and all data. This cannot be undone.
-          </p>
-          <Button
-            variant="outline"
-            className="w-full border-destructive/40 text-destructive hover:bg-destructive/10"
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete My Account
-          </Button>
-        </div>
+          </>
+        )}
       </div>
 
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      <Dialog open={deleteOpen} onOpenChange={(open) => { if (!open) handleResetDeleteDialog(); else setDeleteOpen(true); }}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-destructive flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" /> Delete Account
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <p className="text-sm text-muted-foreground">
-              This will permanently delete your account, all your uploads, and all your data. Enter your password to confirm.
-            </p>
-            <Input
-              type="password"
-              placeholder="Enter your password"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-            />
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => { setDeleteOpen(false); setDeletePassword(""); }}>
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                className="flex-1"
-                disabled={!deletePassword || deleteLoading}
-                onClick={handleDeleteAccount}
-              >
-                {deleteLoading ? "Deleting..." : "Delete Forever"}
-              </Button>
+          {!deleteCodeSent ? (
+            <div className="space-y-4 pt-2">
+              <p className="text-sm text-muted-foreground">
+                This will permanently delete your account, uploaded libraries, points, and all associated data. Enter your password to request an email confirmation code.
+              </p>
+              <Input
+                type="password"
+                placeholder="Enter your password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && deletePassword && !deleteLoading) handleDeleteAccountRequest(); }}
+              />
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={handleResetDeleteDialog}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  disabled={!deletePassword || deleteLoading}
+                  onClick={handleDeleteAccountRequest}
+                >
+                  {deleteLoading ? "Sending code..." : "Send code"}
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4 pt-2">
+              <p className="text-sm text-muted-foreground">
+                A 6-digit code was sent to your email. Enter it below to permanently delete your account.
+              </p>
+              <Input
+                value={deleteCode}
+                onChange={(e) => setDeleteCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onKeyDown={(e) => { if (e.key === "Enter" && deleteCode.length === 6 && !deleteLoading) handleDeleteAccountConfirm(); }}
+                placeholder="000000"
+                inputMode="numeric"
+                maxLength={6}
+                className="h-12 text-center text-2xl font-mono tracking-widest border-destructive/50 focus:border-destructive"
+                autoFocus
+              />
+              <div className="space-y-2">
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  disabled={deleteCode.length !== 6 || deleteLoading}
+                  onClick={handleDeleteAccountConfirm}
+                >
+                  {deleteLoading ? "Deleting account..." : "Permanently Delete Account"}
+                </Button>
+                <div className="flex justify-between items-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => { setDeleteCodeSent(false); setDeleteCode(""); }}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Back
+                  </button>
+                  <Button variant="ghost" size="sm" className="text-xs h-7" onClick={handleResetDeleteDialog}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </Layout>

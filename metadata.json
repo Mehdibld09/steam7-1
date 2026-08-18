@@ -1,0 +1,6 @@
+{
+  "name": "Steam Family",
+  "description": "Browse free Steam games, claim accounts, and share your unused Steam library with the community.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

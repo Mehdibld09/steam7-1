@@ -236,3 +236,27 @@ export function passwordChangeEmailHtml(code: string, username: string): string 
     </div>
   `);
 }
+
+// ─── Account deletion code ───────────────────────────────────────────────────
+export function accountDeletionEmailHtml(code: string, username: string): string {
+  return emailBase(`
+    <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#ef4444;letter-spacing:-0.5px;">Confirm Account Deletion</h1>
+    <p style="margin:0 0 24px;color:#a1a1aa;font-size:15px;line-height:1.6;">
+      Hi <strong style="color:#ffffff;">${escapeHtml(username)}</strong> — you requested to permanently delete your Steam Family account. Enter the verification code below to confirm.
+    </p>
+
+    <div style="background:#09090b;border:1px solid #ef4444;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
+      <p style="margin:0 0 10px;color:#f87171;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Account Deletion Code</p>
+      <span style="font-size:42px;font-weight:900;letter-spacing:10px;color:#ef4444;font-family:monospace;">${escapeHtml(code)}</span>
+    </div>
+
+    <div style="border-top:1px solid #27272a;padding-top:20px;">
+      <p style="margin:0;color:#ef4444;font-size:13px;line-height:1.6;font-weight:600;">
+        ⚠️ This action is permanent and cannot be undone. All your data and uploaded libraries will be deleted.
+      </p>
+      <p style="margin:8px 0 0;color:#52525b;font-size:12px;line-height:1.5;">
+        This code expires in <strong style="color:#a1a1aa;">10 minutes</strong>. If you did not request this, please ignore this email and change your password immediately.
+      </p>
+    </div>
+  `);
+}
