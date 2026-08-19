@@ -5,7 +5,7 @@ import { startHealthCheckScheduler } from "./lib/accountHealthChecker";
 import { startGiveawayScheduler } from "./lib/giveawayScheduler";
 import { getOrCreateAdminBot } from "./lib/adminBot";
 
-const port = 3000;
+const port = Number(process.env.PORT ?? 3000);
 
 app.listen(port, "0.0.0.0", (err) => {
   if (err) {
